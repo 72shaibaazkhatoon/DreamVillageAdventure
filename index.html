@@ -83,10 +83,8 @@ document.querySelectorAll("button").forEach(b=>{
   b.setPointerCapture(e.pointerId);
  });
 
- ["pointerup","pointerleave","pointercancel"].forEach(ev=>{
-  b.addEventListener(ev,()=>{
-   keys[k]=false;
-  });
+ ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>{
+  b.addEventListener(ev,()=>keys[k]=false);
  });
 });
 
@@ -95,7 +93,10 @@ addEventListener("blur",()=>{
 });
 
 const player={x:0,y:0};
-let coins=0,frame=0,rewardShown=false;
+let coins=0;
+let frame=0;
+let rewardShown=false;
+let facing=1;
 
 const coinPlaces=[];
 for(let i=0;i<24;i++){
@@ -207,35 +208,30 @@ function drawShop(){
 function drawAnimal(a){
  ctx.font="30px Arial";
  ctx.textAlign="center";
- ctx.fillText(
-  a.type,
-  a.x,
-  a.y+Math.sin(frame*.1+a.x)*3
- );
+ ctx.fillText(a.type,a.x,a.y+Math.sin(frame*.1+a.x)*3);
 }
-
-/* IMPROVED V11 WALKING CHARACTER */
 
 function drawPlayer(){
 
- const walking=keys.up||keys.down||keys.left||keys.right;
+ const moving=keys.up||keys.down||keys.left||keys.right;
+ const step=moving?Math.sin(frame*.35):0;
+ const bob=moving?Math.abs(step)*4:Math.sin(frame*.035)*1.2;
+ const legSwing=step*10;
+ const armSwing=step*15;
 
- // Stronger walking movement
- const step=walking?Math.sin(frame*.32):0;
- const bob=walking?Math.abs(step)*4:Math.sin(frame*.035)*1.2;
- const legSwing=step*9;
- const armSwing=step*14;
+ ctx.save();
+ ctx.translate(player.x,player.y);
+ ctx.scale(facing,1);
 
- // Ground shadow
+ // Shadow
  ctx.fillStyle="#287b32";
  ctx.beginPath();
- ctx.ellipse(0,19,19,7,0,0,Math.PI*2);
+ ctx.ellipse(0,20,20,7,0,0,Math.PI*2);
  ctx.fill();
 
  // Backpack
  ctx.save();
  ctx.translate(0,-bob);
-
  rounded(-16,-13,32,25,8,"#8e55d9");
  rounded(-14,-11,28,19,6,"#c28bff");
  rounded(-11,-5,22,11,4,"#ffca55");
@@ -248,19 +244,12 @@ function drawPlayer(){
  ctx.moveTo(11,-10);
  ctx.quadraticCurveTo(16,1,12,7);
  ctx.stroke();
-
- ctx.fillStyle="#fff3a5";
- ctx.beginPath();
- ctx.arc(0,-3,3,0,Math.PI*2);
- ctx.fill();
-
  ctx.restore();
 
  // Animated legs
  ctx.lineCap="round";
  ctx.lineWidth=8;
  ctx.strokeStyle="#394d87";
-
  ctx.beginPath();
  ctx.moveTo(-6,9-bob);
  ctx.lineTo(-7-legSwing,25-bob);
@@ -268,21 +257,15 @@ function drawPlayer(){
  ctx.lineTo(7+legSwing,25-bob);
  ctx.stroke();
 
- // Shoes follow the moving legs
+ // Shoes
  ctx.fillStyle="#ff5795";
  ctx.beginPath();
  ctx.ellipse(-8-legSwing,28-bob,7,4,0,0,Math.PI*2);
  ctx.ellipse(8+legSwing,28-bob,7,4,0,0,Math.PI*2);
  ctx.fill();
 
- ctx.fillStyle="#fff";
- ctx.fillRect(-12-legSwing,27-bob,5,2);
- ctx.fillRect(4+legSwing,27-bob,5,2);
-
- // Body outline
+ // Body
  rounded(-14,-13-bob,28,28,9,"#a54bc7");
-
- // Rainbow outfit
  rounded(-12,-12-bob,24,25,7,"#ff71a7");
 
  ctx.save();
@@ -290,11 +273,7 @@ function drawPlayer(){
  ctx.roundRect(-12,-12-bob,24,25,7);
  ctx.clip();
 
- const colours=[
-  "#ffcf52","#ff83a9","#9c7bff",
-  "#57cfff","#69df9b"
- ];
-
+ const colours=["#ffcf52","#ff83a9","#9c7bff","#57cfff","#69df9b"];
  for(let i=0;i<5;i++){
   ctx.fillStyle=colours[i];
   ctx.fillRect(-13,-12-bob+i*5,26,5);
@@ -309,7 +288,7 @@ function drawPlayer(){
  ctx.lineTo(6,-12-bob);
  ctx.fill();
 
- // Animated arms
+ // Swinging arms
  ctx.strokeStyle="#ffc28f";
  ctx.lineWidth=7;
  ctx.beginPath();
@@ -319,7 +298,6 @@ function drawPlayer(){
  ctx.lineTo(17+armSwing,-2-bob);
  ctx.stroke();
 
- // Hands
  ctx.fillStyle="#ffd0a4";
  ctx.beginPath();
  ctx.arc(-17-armSwing,-2-bob,4,0,Math.PI*2);
@@ -342,26 +320,20 @@ function drawPlayer(){
  ctx.arc(15,-29-bob,4,0,Math.PI*2);
  ctx.fill();
 
- // Hair behind head
+ // Hair
  ctx.fillStyle="#60351f";
  ctx.beginPath();
  ctx.arc(-12,-28-bob,7,0,Math.PI*2);
  ctx.arc(12,-28-bob,7,0,Math.PI*2);
- ctx.fill();
-
- // Main hair
- ctx.fillStyle="#60351f";
- ctx.beginPath();
  ctx.arc(0,-35-bob,16,Math.PI,Math.PI*2);
  ctx.fill();
 
- // Fringe
  ctx.beginPath();
  ctx.arc(-7,-36-bob,7,0,Math.PI*2);
  ctx.arc(3,-38-bob,7,0,Math.PI*2);
  ctx.fill();
 
- // Hair bow
+ // Bow
  ctx.fillStyle="#ff5795";
  ctx.beginPath();
  ctx.moveTo(10,-43-bob);
@@ -395,14 +367,7 @@ function drawPlayer(){
  ctx.arc(6,-28-bob,2.3,0,Math.PI*2);
  ctx.fill();
 
- // Eye highlights
- ctx.fillStyle="#fff";
- ctx.beginPath();
- ctx.arc(-7,-30-bob,1,0,Math.PI*2);
- ctx.arc(5,-30-bob,1,0,Math.PI*2);
- ctx.fill();
-
- // Blush
+ // Cheeks
  ctx.fillStyle="#ff929e";
  ctx.beginPath();
  ctx.ellipse(-11,-22-bob,3,2,0,0,Math.PI*2);
@@ -415,9 +380,11 @@ function drawPlayer(){
  ctx.beginPath();
  ctx.arc(0,-23-bob,5,.15,Math.PI-.15);
  ctx.stroke();
+
+ ctx.restore();
 }
 
-/* VILLAGE WORLD */
+/* WORLD AND CAMERA */
 
 function draw(){
 
@@ -426,8 +393,14 @@ function draw(){
  ctx.fillStyle="#63c94d";
  ctx.fillRect(0,0,W,H);
 
+ // Camera dead zone:
+ // Character moves on screen first.
+ // Camera follows after the character reaches the boundary.
+ const cameraX=player.x-Math.max(-W*.22,Math.min(W*.22,player.x));
+ const cameraY=player.y-Math.max(-H*.18,Math.min(H*.18,player.y));
+
  ctx.save();
- ctx.translate(W/2-player.x,H/2-player.y);
+ ctx.translate(W/2-cameraX,H/2-cameraY);
 
  // Roads
  ctx.fillStyle="#d6b887";
@@ -443,15 +416,12 @@ function draw(){
 
  drawShop();
 
- // Gardens and flowers
+ // Flowers
  for(let i=0;i<85;i++){
   const x=Math.sin(i*19)*530;
   const y=Math.cos(i*13)*530;
 
-  ctx.fillStyle=[
-   "#ffec62","#ff80b5","#ffffff","#b98cff"
-  ][i%4];
-
+  ctx.fillStyle=["#ffec62","#ff80b5","#ffffff","#b98cff"][i%4];
   ctx.beginPath();
   ctx.arc(x,y,4,0,Math.PI*2);
   ctx.fill();
@@ -511,16 +481,14 @@ function draw(){
   ctx.fillText("$",c.x,c.y+coinBob+5);
  });
 
- // Character stays in the centre
+ // Character is drawn at its actual world position
  drawPlayer();
 
  ctx.restore();
 
- // Coin collection
+ // Collect coins using world coordinates
  coinPlaces.forEach(c=>{
-  if(!c.got&&Math.hypot(
-   c.x-player.x,c.y-player.y
-  )<27){
+  if(!c.got&&Math.hypot(c.x-player.x,c.y-player.y)<27){
 
    c.got=true;
    coins++;
@@ -567,6 +535,9 @@ function update(){
 
   player.x=Math.max(-850,Math.min(850,player.x));
   player.y=Math.max(-850,Math.min(850,player.y));
+
+  if(dx<0)facing=-1;
+  if(dx>0)facing=1;
  }
 
  draw();
