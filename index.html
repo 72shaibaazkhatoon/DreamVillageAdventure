@@ -3,218 +3,195 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dream Village Adventure V7</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Dream Village Adventure V8</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;overflow:hidden;font-family:Arial,sans-serif;background:#87ceeb}
-#hud{position:fixed;top:12px;left:12px;right:12px;z-index:5;
-color:white;text-shadow:2px 2px 3px #333;font-weight:bold;pointer-events:none}
-#title{font-size:22px}
-#mission{margin-top:6px;font-size:15px}
-#message{margin-top:6px;color:#fff7a8}
-#controls{position:fixed;bottom:22px;left:0;right:0;z-index:6;
-display:flex;justify-content:space-between;padding:0 25px}
-.pad{display:grid;grid-template-columns:48px 48px 48px;grid-template-rows:48px 48px 48px;gap:5px}
-.ctrl{border:2px solid white;border-radius:14px;background:#ffffff99;
-font-size:23px;font-weight:bold;color:#174c2b;touch-action:none}
+body{margin:0;overflow:hidden;font-family:Arial;background:#83d9ff;touch-action:none}
+canvas{display:block;width:100vw;height:100vh}
+#hud{position:fixed;top:12px;left:12px;color:white;
+font-weight:bold;text-shadow:2px 2px 4px #333;z-index:2;pointer-events:none}
+#title{font-size:21px}
+#score{font-size:17px;margin-top:7px}
+#message{font-size:14px;margin-top:5px;color:#fff5a0}
+#controls{position:fixed;bottom:18px;left:15px;right:15px;
+display:flex;justify-content:space-between;z-index:3}
+.pad{display:grid;grid-template-columns:52px 52px 52px;grid-template-rows:52px 52px 52px;gap:4px}
+button{border:2px solid white;border-radius:14px;background:#ffffffbb;
+font-size:24px;font-weight:bold;color:#225b35;touch-action:none}
 .up{grid-column:2}.left{grid-column:1;grid-row:2}
 .down{grid-column:2;grid-row:2}.right{grid-column:3;grid-row:2}
-#hint{align-self:end;color:white;text-shadow:1px 1px 3px #333;font-size:12px}
 </style>
 </head>
 <body>
 <div id="hud">
-  <div id="title">🌈 DREAM VILLAGE V7</div>
-  <div id="mission">🪙 Coins: <span id="score">0</span> / 10</div>
-  <div id="message">Explore the village and collect 10 coins!</div>
+<div id="title">🌈 DREAM VILLAGE V8</div>
+<div id="score">🪙 Coins: 0 / 10</div>
+<div id="message">Explore and collect 10 coins!</div>
 </div>
+<canvas id="game"></canvas>
 <div id="controls">
-  <div class="pad">
-    <button class="ctrl up" data-dir="up">⬆️</button>
-    <button class="ctrl left" data-dir="left">⬅️</button>
-    <button class="ctrl down" data-dir="down">⬇️</button>
-    <button class="ctrl right" data-dir="right">➡️</button>
-  </div>
-  <div id="hint">Use arrows to walk</div>
+<div class="pad">
+<button class="up" data-key="up">⬆️</button>
+<button class="left" data-key="left">⬅️</button>
+<button class="down" data-key="down">⬇️</button>
+<button class="right" data-key="right">➡️</button>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/128/three.min.js"></script>
+</div>
 <script>
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x87ceeb);
-scene.fog=new THREE.Fog(0x87ceeb,45,100);
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+let W,H;
+function resize(){
+ W=canvas.width=innerWidth*devicePixelRatio;
+ H=canvas.height=innerHeight*devicePixelRatio;
+ ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+ W=innerWidth;H=innerHeight;
+}
+addEventListener("resize",resize);resize();
 
-const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,150);
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(innerWidth,innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.shadowMap.enabled=true;
-renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-renderer.outputEncoding=THREE.sRGBEncoding;
-renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.2;
-document.body.appendChild(renderer.domElement);
-
-scene.add(new THREE.HemisphereLight(0xffffff,0x6c9b45,1.2));
-const sun=new THREE.DirectionalLight(0xffffff,1.3);
-sun.position.set(-15,25,12);
-sun.castShadow=true;
-scene.add(sun);
-
-function mat(color){return new THREE.MeshStandardMaterial({color,roughness:.85})}
-const grass=mat(0x55bd45),road=mat(0xc9a878);
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(120,120),grass);
-ground.rotation.x=-Math.PI/2;ground.position.y=-.08;ground.receiveShadow=true;scene.add(ground);
-
-function box(x,y,z,w,h,d,color){
- const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));
- m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);return m;
-}
-function ball(x,y,z,r,color){
- const m=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),mat(color));
- m.position.set(x,y,z);m.castShadow=true;scene.add(m);return m;
-}
-function path(x,z,w,d){
- const m=new THREE.Mesh(new THREE.BoxGeometry(w,.08,d),road);
- m.position.set(x,0,z);m.receiveShadow=true;scene.add(m);
-}
-path(0,0,9,100);path(0,0,100,9);
-path(-20,-20,4,30);path(20,20,4,30);
-
-const houseColors=[0xff805e,0xffd34e,0x62b9f2,0xd98ce8,0x72d69b,0xffa6c9,0xa6a0ff,0xf5a45b];
-function house(x,z,c){
- box(x,1.4,z,5,2.8,4,c);
- const roof=new THREE.Mesh(new THREE.ConeGeometry(3.7,2.1,4),mat(0x9b4935));
- roof.position.set(x,3.85,z);roof.rotation.y=Math.PI/4;roof.castShadow=true;scene.add(roof);
- box(x,0.85,z+2.04,1,1.7,.12,0x75442e);
- box(x-1.35,1.8,z+2.1,.85,.8,.12,0xb9edff);
- box(x+1.35,1.8,z+2.1,.85,.8,.12,0xb9edff);
- box(x,2.75,z+2.1,1.2,.13,.12,0xffffff);
-}
-[[-13,-13],[-13,13],[13,-13],[13,13],[-28,-8],[-28,12],[28,-8],[28,12]]
-.forEach((p,i)=>house(p[0],p[1],houseColors[i]));
-
-function tree(x,z){
- const trunk= new THREE.Mesh(new THREE.CylinderGeometry(.25,.35,2,8),mat(0x80502d));
- trunk.position.set(x,1,z);trunk.castShadow=true;scene.add(trunk);
- ball(x,2.5,z,1.25,0x238d3c);
- ball(x-.5,2.8,z+.1,.7,0x35ad4a);
- ball(x+.55,2.75,z-.1,.65,0x49bd4f);
-}
-for(let i=0;i<36;i++){
- const a=i*Math.PI*2/36;
- const r=24+(i%3)*5;
- tree(Math.cos(a)*r,Math.sin(a)*r);
-}
-for(let i=0;i<24;i++){
- const x=(Math.random()-.5)*48,z=(Math.random()-.5)*48;
- if(Math.abs(x)>7||Math.abs(z)>7){
-  ball(x,.25,z,.25,[0xffe36a,0xff75a8,0xffffff,0xb78aff][i%4]);
- }
-}
-function bench(x,z){
- box(x,.55,z,2,.25,.7,0x9a633b);
- box(x,.95,z-.28,2,.7,.18,0x9a633b);
- for(const dx of [-.75,.75])box(x+dx,.25,z,.12,.5,.12,0x454545);
-}
-bench(-8,5);bench(8,-5);bench(-8,-7);bench(8,7);
-
-function lamp(x,z){
- box(x,.9,z,.13,1.8,.13,0x444444);
- box(x,1.9,z,.6,.5,.6,0xffed9c);
-}
-lamp(-5,0);lamp(5,0);lamp(0,-5);lamp(0,5);
-
-const pond=new THREE.Mesh(new THREE.CircleGeometry(3,32),
- new THREE.MeshStandardMaterial({color:0x35bde5,metalness:.2,roughness:.2}));
-pond.rotation.x=-Math.PI/2;pond.position.set(10,0.05,15);scene.add(pond);
-for(let i=0;i<9;i++)ball(10+Math.cos(i)*3.2,.15,15+Math.sin(i)*3.2,.22,0x8baf4a);
-
-// Cartoon player
-const player=new THREE.Group();scene.add(player);
-const skin=mat(0xffc18c),shirt=mat(0x2878ed),pants=mat(0x333b75);
-const hair=mat(0x51301d),white=mat(0xffffff),black=mat(0x171717);
-function part(parent,g,m,x,y,z){
- const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;parent.add(o);return o;
-}
-part(player,new THREE.CylinderGeometry(.42,.5,.85,12),shirt,0,.9,0);
-part(player,new THREE.SphereGeometry(.48,20,16),skin,0,1.75,0);
-part(player,new THREE.SphereGeometry(.49,16,12),hair,0,2.04,-.08);
-for(let x of [-.18,.18]){
- part(player,new THREE.SphereGeometry(.075,12,10),white,x,1.83,.42);
- part(player,new THREE.SphereGeometry(.035,10,8),black,x,1.83,.485);
-}
-part(player,new THREE.BoxGeometry(.22,.035,.04),black,0,1.59,.46);
-const arms=[],legs=[];
-for(let x of [-.57,.57]){
- const arm=part(player,new THREE.CylinderGeometry(.12,.14,.7,10),skin,x,.95,0);
- arms.push(arm);
- const leg=part(player,new THREE.CylinderGeometry(.14,.16,.55,10),pants,x*.55,.25,0);
- legs.push(leg);
- part(player,new THREE.BoxGeometry(.28,.14,.4),mat(0x35251d),x*.55,.06,.1);
-}
-player.position.set(0,0,0);
-
-const coins=[];
-for(let i=0;i<20;i++){
- const a=i*2.4,r=6+(i%5)*3;
- const coin=new THREE.Mesh(new THREE.TorusGeometry(.38,.12,10,20),
- mat(0xffd21c));
- coin.position.set(Math.cos(a)*r,.9,Math.sin(a)*r);
- coin.castShadow=true;scene.add(coin);coins.push(coin);
-}
-let score=0,walk=0;
 const keys={};
-addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;});
-addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
-document.querySelectorAll('.ctrl').forEach(b=>{
- const d=b.dataset.dir;
- b.addEventListener('pointerdown',e=>{e.preventDefault();keys[d]=true;});
- ['pointerup','pointercancel','pointerleave'].forEach(ev=>
- b.addEventListener(ev,()=>keys[d]=false));
+addEventListener("keydown",e=>{
+ const k=e.key.toLowerCase();
+ if(["arrowup","w"].includes(k))keys.up=true;
+ if(["arrowdown","s"].includes(k))keys.down=true;
+ if(["arrowleft","a"].includes(k))keys.left=true;
+ if(["arrowright","d"].includes(k))keys.right=true;
 });
-function animate(){
- requestAnimationFrame(animate);
- const moving=keys.arrowup||keys.w||keys.up||keys.arrowdown||keys.s||keys.down||
- keys.arrowleft||keys.a||keys.left||keys.arrowright||keys.d||keys.right;
- let dx=0,dz=0;
- if(keys.arrowup||keys.w||keys.up)dz-=1;
- if(keys.arrowdown||keys.s||keys.down)dz+=1;
- if(keys.arrowleft||keys.a||keys.left)dx-=1;
- if(keys.arrowright||keys.d||keys.right)dx+=1;
- if(dx||dz){
-  const len=Math.hypot(dx,dz);dx/=len;dz/=len;
-  player.position.x+=dx*.105;player.position.z+=dz*.105;
-  player.rotation.y=Math.atan2(dx,dz);
-  walk+=.16;
-  legs[0].rotation.x=Math.sin(walk)*.65;
-  legs[1].rotation.x=-Math.sin(walk)*.65;
-  arms[0].rotation.z=Math.sin(walk)*.35;
-  arms[1].rotation.z=-Math.sin(walk)*.35;
- }else{
-  legs.forEach(l=>l.rotation.x=0);
-  arms.forEach(a=>a.rotation.z=0);
+addEventListener("keyup",e=>{
+ const k=e.key.toLowerCase();
+ if(["arrowup","w"].includes(k))keys.up=false;
+ if(["arrowdown","s"].includes(k))keys.down=false;
+ if(["arrowleft","a"].includes(k))keys.left=false;
+ if(["arrowright","d"].includes(k))keys.right=false;
+});
+document.querySelectorAll("button").forEach(b=>{
+ const k=b.dataset.key;
+ b.addEventListener("pointerdown",e=>{e.preventDefault();keys[k]=true});
+ ["pointerup","pointerleave","pointercancel"].forEach(ev=>
+ b.addEventListener(ev,()=>keys[k]=false));
+});
+
+const player={x:0,y:0};
+let coins=0,frame=0;
+const coinPlaces=[];
+for(let i=0;i<18;i++){
+ const a=i*2.4,r=100+(i%4)*65;
+ coinPlaces.push({x:Math.cos(a)*r,y:Math.sin(a)*r,got:false});
+}
+const houses=[
+ [-220,-180,"#ff8b70"],[220,-180,"#ffd65c"],
+ [-220,180,"#a78bfa"],[220,180,"#ff9cc9"],
+ [-430,-30,"#74c8f5"],[430,30,"#78d89a"],
+ [-30,-420,"#ffad62"],[30,420,"#e69cf5"]
+];
+const trees=[];
+for(let i=0;i<45;i++){
+ const a=i*2.4,r=330+(i%4)*55;
+ trees.push({x:Math.cos(a)*r,y:Math.sin(a)*r});
+}
+function rounded(x,y,w,h,r,color){
+ ctx.fillStyle=color;ctx.beginPath();
+ ctx.roundRect(x,y,w,h,r);ctx.fill();
+}
+function drawHouse(x,y,c){
+ rounded(x-39,y-27,78,57,8,c);
+ ctx.fillStyle="#93482e";ctx.beginPath();
+ ctx.moveTo(x-48,y-25);ctx.lineTo(x,y-65);
+ ctx.lineTo(x+48,y-25);ctx.closePath();ctx.fill();
+ rounded(x-10,y+2,20,28,4,"#79432e");
+ rounded(x-29,y-15,17,16,3,"#c9f4ff");
+ rounded(x+12,y-15,17,16,3,"#c9f4ff");
+}
+function drawTree(x,y){
+ ctx.fillStyle="#81502d";ctx.fillRect(x-6,y,12,25);
+ ctx.fillStyle="#238c43";ctx.beginPath();ctx.arc(x,y-7,25,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#42b957";ctx.beginPath();ctx.arc(x-10,y-16,13,0,Math.PI*2);ctx.fill();
+}
+function draw(){
+ frame++;
+ ctx.fillStyle="#63c94d";ctx.fillRect(0,0,W,H);
+ const cx=W/2-player.x,cy=H/2-player.y;
+ ctx.save();ctx.translate(cx,cy);
+
+ // Village roads
+ ctx.fillStyle="#d6b887";
+ ctx.fillRect(-1000,-48,2000,96);
+ ctx.fillRect(-48,-1000,96,2000);
+ ctx.fillStyle="#f1d9aa";
+ ctx.fillRect(-1000,-4,2000,8);
+ ctx.fillRect(-4,-1000,8,2000);
+
+ // Houses
+ houses.forEach(h=>drawHouse(h[0],h[1],h[2]));
+
+ // Trees and flowers
+ trees.forEach(t=>drawTree(t.x,t.y));
+ for(let i=0;i<55;i++){
+  const x=Math.sin(i*19)*490,y=Math.cos(i*13)*490;
+  ctx.fillStyle=["#ffec62","#ff80b5","#ffffff"][i%3];
+  ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();
  }
- player.position.x=THREE.MathUtils.clamp(player.position.x,-48,48);
- player.position.z=THREE.MathUtils.clamp(player.position.z,-48,48);
- coins.forEach(c=>{
-  c.rotation.y+=.04;c.position.y=.9+Math.sin(Date.now()*.003+c.position.x)*.12;
-  if(c.visible&&c.position.distanceTo(player.position)<1.25){
-   c.visible=false;score++;
-   document.getElementById('score').textContent=score;
-   document.getElementById('message').textContent=
-   score>=10?'🎉 Amazing! You completed the mission!':'✨ Great! You found a coin!';
+
+ // Pond
+ ctx.fillStyle="#258fdf";ctx.beginPath();ctx.ellipse(310,280,65,42,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#8ce7ff";ctx.beginPath();ctx.ellipse(300,270,24,8,0,0,Math.PI*2);ctx.fill();
+
+ // Benches
+ for(const [x,y] of [[-130,100],[130,-100],[-150,-110],[150,110]]){
+  rounded(x-22,y-7,44,14,3,"#87502f");
+  ctx.fillStyle="#444";ctx.fillRect(x-17,y+7,5,12);ctx.fillRect(x+12,y+7,5,12);
+ }
+
+ // Coins
+ coinPlaces.forEach(c=>{
+  if(c.got)return;
+  const bob=Math.sin(frame*.08+c.x)*4;
+  ctx.fillStyle="#ffbd00";ctx.beginPath();
+  ctx.arc(c.x,c.y+bob,12,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle="#fff18a";ctx.lineWidth=3;ctx.stroke();
+  ctx.fillStyle="#9a6500";ctx.font="bold 14px Arial";
+  ctx.textAlign="center";ctx.fillText("$",c.x,c.y+bob+5);
+ });
+
+ // Character
+ ctx.fillStyle="#333";ctx.beginPath();ctx.ellipse(0,18,17,7,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#2878ed";ctx.fillRect(-12,-10,24,26);
+ ctx.fillStyle="#ffc18c";ctx.beginPath();ctx.arc(0,-24,15,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#51301d";ctx.beginPath();ctx.arc(0,-30,15,Math.PI,Math.PI*2);ctx.fill();
+ ctx.fillStyle="white";ctx.beginPath();ctx.arc(-5,-25,3,0,Math.PI*2);ctx.arc(5,-25,3,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#222";ctx.beginPath();ctx.arc(-5,-25,1.5,0,Math.PI*2);ctx.arc(5,-25,1.5,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle="#8c3b32";ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,-19,5,.2,Math.PI-.2);ctx.stroke();
+ ctx.strokeStyle="#ffc18c";ctx.lineWidth=6;ctx.beginPath();
+ ctx.moveTo(-11,-4);ctx.lineTo(-19,7);ctx.moveTo(11,-4);ctx.lineTo(19,7);ctx.stroke();
+ ctx.strokeStyle="#303c72";ctx.lineWidth=7;ctx.beginPath();
+ ctx.moveTo(-6,16);ctx.lineTo(-8,29);ctx.moveTo(6,16);ctx.lineTo(8,29);ctx.stroke();
+ ctx.restore();
+
+ // Collect coins
+ coinPlaces.forEach(c=>{
+  if(!c.got&&Math.hypot(c.x-player.x,c.y-player.y)<27){
+   c.got=true;coins++;
+   document.getElementById("score").textContent="🪙 Coins: "+coins+" / 10";
+   document.getElementById("message").textContent=
+   coins>=10?"🎉 You completed the mission!":"✨ Wonderful! Coin collected!";
   }
  });
- camera.position.lerp(new THREE.Vector3(player.position.x,10,player.position.z+13),.07);
- camera.lookAt(player.position.x,1,player.position.z);
- renderer.render(scene,camera);
 }
-animate();
-addEventListener('resize',()=>{
- camera.aspect=innerWidth/innerHeight;
- camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);
-});
+function update(){
+ if(keys.up||keys.down||keys.left||keys.right){
+  let dx=0,dy=0;
+  if(keys.up)dy-=1;if(keys.down)dy+=1;
+  if(keys.left)dx-=1;if(keys.right)dx+=1;
+  const n=Math.hypot(dx,dy)||1;
+  player.x+=dx/n*3;player.y+=dy/n*3;
+  player.x=Math.max(-850,Math.min(850,player.x));
+  player.y=Math.max(-850,Math.min(850,player.y));
+ }
+ draw();
+ requestAnimationFrame(update);
+}
+update();
 </script>
 </body>
 </html>
