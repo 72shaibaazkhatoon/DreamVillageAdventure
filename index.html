@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Dream Village Adventure V9</title>
+<title>Dream Village Adventure V10</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;overflow:hidden;font-family:Arial;background:#83d9ff;touch-action:none}
@@ -21,7 +20,7 @@ button{border:2px solid white;border-radius:14px;background:#ffffffbb;font-size:
 </head>
 <body>
 <div id="hud">
-<div id="title">🌈 DREAM VILLAGE V9</div>
+<div id="title">🌈 DREAM VILLAGE V10</div>
 <div id="score">🪙 Coins: 0 / 10</div>
 <div id="message">Explore, meet animals and collect coins!</div>
 </div>
@@ -109,7 +108,6 @@ function drawTree(x,y){
  ctx.fillStyle="#42b957";ctx.beginPath();ctx.arc(x-10,y-16,13,0,Math.PI*2);ctx.fill();
 }
 function drawShop(){
- // Village shop
  rounded(-65,-345,130,90,10,"#f7d18a");
  ctx.fillStyle="#a54e38";ctx.beginPath();
  ctx.moveTo(-75,-345);ctx.lineTo(0,-395);ctx.lineTo(75,-345);
@@ -129,10 +127,79 @@ function drawAnimal(a){
  ctx.font="30px Arial";ctx.textAlign="center";
  ctx.fillText(a.type,a.x,a.y+Math.sin(frame*.1+a.x)*3);
 }
+function drawPlayer(){
+ const walking=keys.up||keys.down||keys.left||keys.right;
+ const step=walking?Math.sin(frame*.35):0;
+ const bob=walking?Math.abs(step)*3:0;
+
+ // Shadow
+ ctx.fillStyle="#333";
+ ctx.beginPath();
+ ctx.ellipse(0,18,17,7,0,0,Math.PI*2);
+ ctx.fill();
+
+ // Legs swing in opposite directions
+ ctx.strokeStyle="#303c72";
+ ctx.lineWidth=7;
+ ctx.lineCap="round";
+ ctx.beginPath();
+ ctx.moveTo(-6,12-bob);
+ ctx.lineTo(-8-step*7,28-bob);
+ ctx.moveTo(6,12-bob);
+ ctx.lineTo(8+step*7,28-bob);
+ ctx.stroke();
+
+ // Body
+ ctx.fillStyle="#2878ed";
+ ctx.fillRect(-12,-10-bob,24,26);
+
+ // Arms swing while walking
+ ctx.strokeStyle="#ffc18c";
+ ctx.lineWidth=6;
+ ctx.beginPath();
+ ctx.moveTo(-11,-4-bob);
+ ctx.lineTo(-19-step*7,7-bob);
+ ctx.moveTo(11,-4-bob);
+ ctx.lineTo(19+step*7,7-bob);
+ ctx.stroke();
+
+ // Face
+ ctx.fillStyle="#ffc18c";
+ ctx.beginPath();
+ ctx.arc(0,-24-bob,15,0,Math.PI*2);
+ ctx.fill();
+
+ // Hair
+ ctx.fillStyle="#51301d";
+ ctx.beginPath();
+ ctx.arc(0,-30-bob,15,Math.PI,Math.PI*2);
+ ctx.fill();
+
+ // Eyes
+ ctx.fillStyle="white";
+ ctx.beginPath();
+ ctx.arc(-5,-25-bob,3,0,Math.PI*2);
+ ctx.arc(5,-25-bob,3,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="#222";
+ ctx.beginPath();
+ ctx.arc(-5,-25-bob,1.5,0,Math.PI*2);
+ ctx.arc(5,-25-bob,1.5,0,Math.PI*2);
+ ctx.fill();
+
+ // Smile
+ ctx.strokeStyle="#8c3b32";
+ ctx.lineWidth=2;
+ ctx.beginPath();
+ ctx.arc(0,-19-bob,5,.2,Math.PI-.2);
+ ctx.stroke();
+}
 function draw(){
  frame++;
  ctx.fillStyle="#63c94d";ctx.fillRect(0,0,W,H);
- ctx.save();ctx.translate(W/2-player.x,H/2-player.y);
+ ctx.save();
+ ctx.translate(W/2-player.x,H/2-player.y);
 
  // Roads
  ctx.fillStyle="#d6b887";
@@ -181,18 +248,8 @@ function draw(){
   ctx.textAlign="center";ctx.fillText("$",c.x,c.y+bob+5);
  });
 
- // Player
- ctx.fillStyle="#333";ctx.beginPath();ctx.ellipse(0,18,17,7,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#2878ed";ctx.fillRect(-12,-10,24,26);
- ctx.fillStyle="#ffc18c";ctx.beginPath();ctx.arc(0,-24,15,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#51301d";ctx.beginPath();ctx.arc(0,-30,15,Math.PI,Math.PI*2);ctx.fill();
- ctx.fillStyle="white";ctx.beginPath();ctx.arc(-5,-25,3,0,Math.PI*2);ctx.arc(5,-25,3,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#222";ctx.beginPath();ctx.arc(-5,-25,1.5,0,Math.PI*2);ctx.arc(5,-25,1.5,0,Math.PI*2);ctx.fill();
- ctx.strokeStyle="#8c3b32";ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,-19,5,.2,Math.PI-.2);ctx.stroke();
- ctx.strokeStyle="#ffc18c";ctx.lineWidth=6;ctx.beginPath();
- ctx.moveTo(-11,-4);ctx.lineTo(-19,7);ctx.moveTo(11,-4);ctx.lineTo(19,7);ctx.stroke();
- ctx.strokeStyle="#303c72";ctx.lineWidth=7;ctx.beginPath();
- ctx.moveTo(-6,16);ctx.lineTo(-8,29);ctx.moveTo(6,16);ctx.lineTo(8,29);ctx.stroke();
+ // Player remains centred while the village moves
+ drawPlayer();
  ctx.restore();
 
  // Coin collection
@@ -219,7 +276,8 @@ function update(){
   player.x=Math.max(-850,Math.min(850,player.x));
   player.y=Math.max(-850,Math.min(850,player.y));
  }
- draw();requestAnimationFrame(update);
+ draw();
+ requestAnimationFrame(update);
 }
 update();
 </script>
