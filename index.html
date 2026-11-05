@@ -3,165 +3,194 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dream Village Adventure</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#172b24;font-family:Arial;color:white;text-align:center;overflow:hidden}
-header{padding:10px;background:#245d40}
-h2{margin:5px;font-size:23px}
-#stats{display:flex;justify-content:space-around;padding:10px;background:#183c2d}
-#game{display:block;width:100%;height:calc(100dvh - 190px);background:#8acb70;touch-action:none}
-.controls{display:flex;justify-content:center;gap:22px;padding:10px;background:#183c2d}
-button{background:#f4c64e;color:#263a26;border:0;border-radius:14px;padding:13px 20px;font-size:22px;font-weight:bold}
-button:active{background:#fff}
-#message{font-size:13px;padding:5px}
+body{
+ margin:0;
+ font-family:Arial,sans-serif;
+ text-align:center;
+ background:linear-gradient(#83d8ff,#d9f7c5);
+ color:#23452b;
+}
+h1{margin:15px 5px;font-size:27px}
+#stats{
+ display:flex;
+ justify-content:space-around;
+ flex-wrap:wrap;
+ gap:8px;
+ margin:12px;
+ font-weight:bold;
+}
+canvas{
+ width:94%;
+ max-width:600px;
+ background:#9be477;
+ border:4px solid #fff;
+ border-radius:15px;
+ touch-action:none;
+}
+.controls{
+ margin:12px auto;
+ display:grid;
+ grid-template-columns:60px 60px 60px;
+ justify-content:center;
+ gap:7px;
+}
+button{
+ border:0;
+ border-radius:12px;
+ padding:15px;
+ background:#287d42;
+ color:white;
+ font-size:20px;
+ font-weight:bold;
+}
+button:active{background:#145329}
+#message{font-weight:bold;min-height:25px}
 </style>
 </head>
 <body>
-<header>
-<h2>🌳 Dream Village Adventure 🌳</h2>
-<div>Welcome to your little village!</div>
-</header>
+
+<h1>🏡 Dream Village Adventure</h1>
+
 <div id="stats">
-<span>🪙 Coins: <b id="coins">0</b></span>
-<span>⭐ Level: <b id="level">1</b></span>
-<span>🌻 Flowers: <b id="flowers">0</b></span>
+ <span>🪙 Coins: <span id="coins">0</span></span>
+ <span>🌸 Flowers: <span id="flowers">0</span></span>
+ <span>⭐ Level: <span id="level">1</span></span>
 </div>
-<canvas id="game"></canvas>
-<div id="message">Collect the golden coins and explore!</div>
+
+<canvas id="game" width="600" height="400"></canvas>
+
 <div class="controls">
-<button data-dir="up">⬆️</button>
-<button data-dir="left">⬅️</button>
-<button data-dir="down">⬇️</button>
-<button data-dir="right">➡️</button>
+ <span></span><button onclick="move(0,-1)">⬆️</button><span></span>
+ <button onclick="move(-1,0)">⬅️</button>
+ <button onclick="move(0,1)">⬇️</button>
+ <button onclick="move(1,0)">➡️</button>
 </div>
+
+<p id="message">Explore the village and collect treasures!</p>
+<button onclick="restart()">🔄 Restart Game</button>
+
 <script>
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
-let w=0,h=0;
-function resize(){
- const dpr=Math.min(devicePixelRatio||1,2);
- w=canvas.clientWidth;h=canvas.clientHeight;
- canvas.width=w*dpr;canvas.height=h*dpr;
- ctx.setTransform(dpr,0,0,dpr,0,0);
-}
-window.addEventListener("resize",resize);
-resize();
 
-const player={x:0,y:0,size:18,speed:3};
-let coins=0,flowers=0;
-let keys={};
-let objects=[];
+let player={x:300,y:200};
+let coins=0,flowers=0,level=1;
 
-function resetObjects(){
- objects=[
- {x:.18,y:.22,type:"house"},
- {x:.78,y:.22,type:"house"},
- {x:.2,y:.76,type:"tree"},
- {x:.78,y:.76,type:"tree"},
- {x:.5,y:.18,type:"cow"},
- {x:.5,y:.77,type:"flower"},
- {x:.35,y:.48,type:"coin"},
- {x:.7,y:.55,type:"coin"},
- {x:.2,y:.53,type:"coin"},
- {x:.5,y:.9,type:"coin"}
- ];
-}
-resetObjects();
-player.x=w/2;player.y=h/2;
+let treasures=[
+ {x:100,y:100,type:"coin"},
+ {x:500,y:100,type:"flower"},
+ {x:200,y:300,type:"coin"},
+ {x:450,y:300,type:"flower"},
+ {x:300,y:80,type:"coin"},
+ {x:100,y:300,type:"flower"}
+];
 
-function drawTree(x,y){
- ctx.fillStyle="#80532d";ctx.fillRect(x-5,y,10,20);
- ctx.fillStyle="#268b48";ctx.beginPath();ctx.arc(x,y,20,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#52b85c";ctx.beginPath();ctx.arc(x-7,y-7,10,0,Math.PI*2);ctx.fill();
-}
-function drawHouse(x,y){
- ctx.fillStyle="#e7b77a";ctx.fillRect(x-24,y-10,48,35);
- ctx.fillStyle="#b84c38";ctx.beginPath();ctx.moveTo(x-30,y-10);ctx.lineTo(x,y-38);ctx.lineTo(x+30,y-10);ctx.fill();
- ctx.fillStyle="#69462e";ctx.fillRect(x-7,y+5,14,20);
- ctx.fillStyle="#9bd8ed";ctx.fillRect(x-20,y-5,10,10);ctx.fillRect(x+10,y-5,10,10);
-}
 function draw(){
- ctx.clearRect(0,0,w,h);
- ctx.fillStyle="#8acb70";ctx.fillRect(0,0,w,h);
- ctx.fillStyle="#d6c18a";
- ctx.fillRect(w*.44,0,w*.12,h);
- ctx.fillRect(0,h*.43,w,h*.13);
- ctx.fillStyle="#b6e4ee";ctx.fillRect(w*.88,0,w*.12,h);
- ctx.fillStyle="#9cceec";ctx.fillRect(w*.9,0,w*.08,h);
- for(let i=0;i<12;i++){
-  drawTree((i*97+25)%w,(i*73+45)%h);
- }
- objects.forEach(o=>{
-  let x=o.x*w,y=o.y*h;
-  if(o.type==="house")drawHouse(x,y);
-  if(o.type==="tree")drawTree(x,y);
-  if(o.type==="coin"){
-   ctx.fillStyle="#ffdb35";ctx.beginPath();ctx.arc(x,y,11,0,Math.PI*2);ctx.fill();
-   ctx.fillStyle="#a46b00";ctx.font="bold 14px Arial";ctx.textAlign="center";ctx.fillText("$",x,y+5);
-  }
-  if(o.type==="cow"){
-   ctx.font="30px Arial";ctx.fillText("🐄",x,y);
-  }
-  if(o.type==="flower"){
-   ctx.font="30px Arial";ctx.fillText("🌻",x,y);
-  }
+ ctx.clearRect(0,0,600,400);
+
+ // Grass
+ ctx.fillStyle="#8bd66b";
+ ctx.fillRect(0,0,600,400);
+
+ // Path
+ ctx.fillStyle="#d8bd83";
+ ctx.fillRect(0,175,600,55);
+ ctx.fillRect(270,0,55,400);
+
+ // Houses
+ house(35,35,"🏠");
+ house(475,35,"🏡");
+ house(35,310,"🏠");
+ house(475,310,"🏡");
+
+ // Trees
+ ["🌳","🌲","🌳","🌲"].forEach((t,i)=>{
+  ctx.font="38px Arial";
+  ctx.fillText(t,[180,400,180,400][i],[60,60,350,350][i]);
  });
- ctx.font="32px Arial";ctx.textAlign="center";
- ctx.fillText("🧑",player.x,player.y+10);
+
+ // Cow
+ ctx.font="38px Arial";
+ ctx.fillText("🐄",350,150);
+
+ // Treasures
+ treasures.forEach(t=>{
+  ctx.font="27px Arial";
+  ctx.fillText(t.type==="coin"?"🪙":"🌸",t.x,t.y);
+ });
+
+ // Player
+ ctx.font="38px Arial";
+ ctx.fillText("🧑",player.x-18,player.y+12);
 }
-function move(){
- let dx=0,dy=0;
- if(keys.left)dx--;
- if(keys.right)dx++;
- if(keys.up)dy--;
- if(keys.down)dy++;
- if(dx&&dy){dx*=.707;dy*=.707;}
- player.x=Math.max(15,Math.min(w-15,player.x+dx*player.speed));
- player.y=Math.max(25,Math.min(h-15,player.y+dy*player.speed));
- objects.forEach(o=>{
-  if(o.type!=="coin"&&o.type!=="flower")return;
-  let ox=o.x*w,oy=o.y*h;
-  if(Math.hypot(player.x-ox,player.y-oy)<27){
-   if(o.type==="coin"){
-    coins+=10;
-    document.getElementById("coins").textContent=coins;
-    objects.splice(objects.indexOf(o),1);
-    document.getElementById("message").textContent="Amazing! You found 10 coins! 🪙";
+
+function house(x,y,emoji){
+ ctx.font="55px Arial";
+ ctx.fillText(emoji,x,y+45);
+}
+
+function move(dx,dy){
+ player.x=Math.max(20,Math.min(580,player.x+dx*25));
+ player.y=Math.max(25,Math.min(375,player.y+dy*25));
+ collect();
+ draw();
+}
+
+function collect(){
+ treasures=treasures.filter(t=>{
+  if(Math.hypot(t.x-player.x,t.y-player.y)<35){
+   if(t.type==="coin"){
+    coins++;
+    document.getElementById("message").textContent="Amazing! You found a coin!";
    }else{
     flowers++;
-    document.getElementById("flowers").textContent=flowers;
-    objects.splice(objects.indexOf(o),1);
-    document.getElementById("message").textContent="Beautiful flower collected! 🌻";
+    document.getElementById("message").textContent="Beautiful flower collected!";
    }
+   return false;
   }
+  return true;
  });
- if(coins>=50)document.getElementById("level").textContent="2";
+
+ level=Math.floor(coins/5)+1;
+ document.getElementById("coins").textContent=coins;
+ document.getElementById("flowers").textContent=flowers;
+ document.getElementById("level").textContent=level;
+
+ if(treasures.length===0){
+  document.getElementById("message").textContent="🎉 Village explorer! You collected everything!";
+ }
 }
-document.querySelectorAll("[data-dir]").forEach(btn=>{
- const dir=btn.dataset.dir;
- btn.addEventListener("pointerdown",e=>{e.preventDefault();keys[dir]=true;});
- btn.addEventListener("pointerup",()=>keys[dir]=false);
- btn.addEventListener("pointerleave",()=>keys[dir]=false);
- btn.addEventListener("pointercancel",()=>keys[dir]=false);
+
+function restart(){
+ player={x:300,y:200};
+ coins=0;flowers=0;level=1;
+ treasures=[
+  {x:100,y:100,type:"coin"},
+  {x:500,y:100,type:"flower"},
+  {x:200,y:300,type:"coin"},
+  {x:450,y:300,type:"flower"},
+  {x:300,y:80,type:"coin"},
+  {x:100,y:300,type:"flower"}
+ ];
+ document.getElementById("coins").textContent=0;
+ document.getElementById("flowers").textContent=0;
+ document.getElementById("level").textContent=1;
+ document.getElementById("message").textContent="Explore the village and collect treasures!";
+ draw();
+}
+
+document.addEventListener("keydown",e=>{
+ if(e.key==="ArrowUp")move(0,-1);
+ if(e.key==="ArrowDown")move(0,1);
+ if(e.key==="ArrowLeft")move(-1,0);
+ if(e.key==="ArrowRight")move(1,0);
 });
-window.addEventListener("keydown",e=>{
- let k=e.key.toLowerCase();
- if(k==="arrowup"||k==="w")keys.up=true;
- if(k==="arrowdown"||k==="s")keys.down=true;
- if(k==="arrowleft"||k==="a")keys.left=true;
- if(k==="arrowright"||k==="d")keys.right=true;
-});
-window.addEventListener("keyup",e=>{
- let k=e.key.toLowerCase();
- if(k==="arrowup"||k==="w")keys.up=false;
- if(k==="arrowdown"||k==="s")keys.down=false;
- if(k==="arrowleft"||k==="a")keys.left=false;
- if(k==="arrowright"||k==="d")keys.right=false;
-});
-function loop(){move();draw();requestAnimationFrame(loop);}
-loop();
+
+draw();
 </script>
 </body>
 </html>
