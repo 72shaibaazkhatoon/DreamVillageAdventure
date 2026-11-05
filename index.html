@@ -4,30 +4,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Dream Village Adventure V8</title>
+<title>Dream Village Adventure V9</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;overflow:hidden;font-family:Arial;background:#83d9ff;touch-action:none}
 canvas{display:block;width:100vw;height:100vh}
-#hud{position:fixed;top:12px;left:12px;color:white;
-font-weight:bold;text-shadow:2px 2px 4px #333;z-index:2;pointer-events:none}
-#title{font-size:21px}
-#score{font-size:17px;margin-top:7px}
+#hud{position:fixed;top:12px;left:12px;color:white;font-weight:bold;text-shadow:2px 2px 4px #333;z-index:2;pointer-events:none}
+#title{font-size:21px}#score{font-size:17px;margin-top:7px}
 #message{font-size:14px;margin-top:5px;color:#fff5a0}
-#controls{position:fixed;bottom:18px;left:15px;right:15px;
-display:flex;justify-content:space-between;z-index:3}
+#controls{position:fixed;bottom:18px;left:15px;right:15px;display:flex;justify-content:space-between;z-index:3}
 .pad{display:grid;grid-template-columns:52px 52px 52px;grid-template-rows:52px 52px 52px;gap:4px}
-button{border:2px solid white;border-radius:14px;background:#ffffffbb;
-font-size:24px;font-weight:bold;color:#225b35;touch-action:none}
+button{border:2px solid white;border-radius:14px;background:#ffffffbb;font-size:24px;font-weight:bold;color:#225b35;touch-action:none}
 .up{grid-column:2}.left{grid-column:1;grid-row:2}
 .down{grid-column:2;grid-row:2}.right{grid-column:3;grid-row:2}
 </style>
 </head>
 <body>
 <div id="hud">
-<div id="title">🌈 DREAM VILLAGE V8</div>
+<div id="title">🌈 DREAM VILLAGE V9</div>
 <div id="score">🪙 Coins: 0 / 10</div>
-<div id="message">Explore and collect 10 coins!</div>
+<div id="message">Explore, meet animals and collect coins!</div>
 </div>
 <canvas id="game"></canvas>
 <div id="controls">
@@ -43,8 +39,8 @@ const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 let W,H;
 function resize(){
- W=canvas.width=innerWidth*devicePixelRatio;
- H=canvas.height=innerHeight*devicePixelRatio;
+ canvas.width=innerWidth*devicePixelRatio;
+ canvas.height=innerHeight*devicePixelRatio;
  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
  W=innerWidth;H=innerHeight;
 }
@@ -73,10 +69,10 @@ document.querySelectorAll("button").forEach(b=>{
 });
 
 const player={x:0,y:0};
-let coins=0,frame=0;
+let coins=0,frame=0,rewardShown=false;
 const coinPlaces=[];
-for(let i=0;i<18;i++){
- const a=i*2.4,r=100+(i%4)*65;
+for(let i=0;i<24;i++){
+ const a=i*2.4,r=100+(i%5)*75;
  coinPlaces.push({x:Math.cos(a)*r,y:Math.sin(a)*r,got:false});
 }
 const houses=[
@@ -90,9 +86,13 @@ for(let i=0;i<45;i++){
  const a=i*2.4,r=330+(i%4)*55;
  trees.push({x:Math.cos(a)*r,y:Math.sin(a)*r});
 }
+const animals=[];
+for(let i=0;i<8;i++){
+ animals.push({x:Math.sin(i*5)*340,y:Math.cos(i*4)*330,
+ direction:i%2?1:-1,type:i%2?"🐶":"🐱",speed:.5+(i%3)*.2});
+}
 function rounded(x,y,w,h,r,color){
- ctx.fillStyle=color;ctx.beginPath();
- ctx.roundRect(x,y,w,h,r);ctx.fill();
+ ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();
 }
 function drawHouse(x,y,c){
  rounded(x-39,y-27,78,57,8,c);
@@ -108,13 +108,33 @@ function drawTree(x,y){
  ctx.fillStyle="#238c43";ctx.beginPath();ctx.arc(x,y-7,25,0,Math.PI*2);ctx.fill();
  ctx.fillStyle="#42b957";ctx.beginPath();ctx.arc(x-10,y-16,13,0,Math.PI*2);ctx.fill();
 }
+function drawShop(){
+ // Village shop
+ rounded(-65,-345,130,90,10,"#f7d18a");
+ ctx.fillStyle="#a54e38";ctx.beginPath();
+ ctx.moveTo(-75,-345);ctx.lineTo(0,-395);ctx.lineTo(75,-345);
+ ctx.closePath();ctx.fill();
+ rounded(-57,-342,114,19,4,"#ff6381");
+ for(let i=0;i<5;i++){
+  ctx.fillStyle=i%2?"#fff4cf":"#ff6381";
+  ctx.fillRect(-57+i*23,-342,23,19);
+ }
+ rounded(-20,-315,40,60,4,"#75442e");
+ rounded(-54,-321,25,24,3,"#b9edff");
+ rounded(29,-321,25,24,3,"#b9edff");
+ ctx.fillStyle="#fff";ctx.font="bold 17px Arial";ctx.textAlign="center";
+ ctx.fillText("VILLAGE SHOP",0,-370);
+}
+function drawAnimal(a){
+ ctx.font="30px Arial";ctx.textAlign="center";
+ ctx.fillText(a.type,a.x,a.y+Math.sin(frame*.1+a.x)*3);
+}
 function draw(){
  frame++;
  ctx.fillStyle="#63c94d";ctx.fillRect(0,0,W,H);
- const cx=W/2-player.x,cy=H/2-player.y;
- ctx.save();ctx.translate(cx,cy);
+ ctx.save();ctx.translate(W/2-player.x,H/2-player.y);
 
- // Village roads
+ // Roads
  ctx.fillStyle="#d6b887";
  ctx.fillRect(-1000,-48,2000,96);
  ctx.fillRect(-48,-1000,96,2000);
@@ -122,39 +142,46 @@ function draw(){
  ctx.fillRect(-1000,-4,2000,8);
  ctx.fillRect(-4,-1000,8,2000);
 
- // Houses
  houses.forEach(h=>drawHouse(h[0],h[1],h[2]));
-
- // Trees and flowers
  trees.forEach(t=>drawTree(t.x,t.y));
- for(let i=0;i<55;i++){
-  const x=Math.sin(i*19)*490,y=Math.cos(i*13)*490;
-  ctx.fillStyle=["#ffec62","#ff80b5","#ffffff"][i%3];
+ drawShop();
+
+ // Gardens and flowers
+ for(let i=0;i<85;i++){
+  const x=Math.sin(i*19)*530,y=Math.cos(i*13)*530;
+  ctx.fillStyle=["#ffec62","#ff80b5","#ffffff","#b98cff"][i%4];
   ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();
+  if(i%4===0){
+   ctx.fillStyle="#238b40";ctx.fillRect(x-2,y+4,4,9);
+  }
  }
 
- // Pond
+ // Pond and benches
  ctx.fillStyle="#258fdf";ctx.beginPath();ctx.ellipse(310,280,65,42,0,0,Math.PI*2);ctx.fill();
  ctx.fillStyle="#8ce7ff";ctx.beginPath();ctx.ellipse(300,270,24,8,0,0,Math.PI*2);ctx.fill();
-
- // Benches
  for(const [x,y] of [[-130,100],[130,-100],[-150,-110],[150,110]]){
   rounded(x-22,y-7,44,14,3,"#87502f");
   ctx.fillStyle="#444";ctx.fillRect(x-17,y+7,5,12);ctx.fillRect(x+12,y+7,5,12);
  }
 
+ // Walking animals
+ animals.forEach(a=>{
+  drawAnimal(a);
+  a.x+=a.direction*a.speed;
+  if(a.x>470||a.x< -470)a.direction*=-1;
+ });
+
  // Coins
  coinPlaces.forEach(c=>{
   if(c.got)return;
   const bob=Math.sin(frame*.08+c.x)*4;
-  ctx.fillStyle="#ffbd00";ctx.beginPath();
-  ctx.arc(c.x,c.y+bob,12,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#ffbd00";ctx.beginPath();ctx.arc(c.x,c.y+bob,12,0,Math.PI*2);ctx.fill();
   ctx.strokeStyle="#fff18a";ctx.lineWidth=3;ctx.stroke();
   ctx.fillStyle="#9a6500";ctx.font="bold 14px Arial";
   ctx.textAlign="center";ctx.fillText("$",c.x,c.y+bob+5);
  });
 
- // Character
+ // Player
  ctx.fillStyle="#333";ctx.beginPath();ctx.ellipse(0,18,17,7,0,0,Math.PI*2);ctx.fill();
  ctx.fillStyle="#2878ed";ctx.fillRect(-12,-10,24,26);
  ctx.fillStyle="#ffc18c";ctx.beginPath();ctx.arc(0,-24,15,0,Math.PI*2);ctx.fill();
@@ -168,13 +195,17 @@ function draw(){
  ctx.moveTo(-6,16);ctx.lineTo(-8,29);ctx.moveTo(6,16);ctx.lineTo(8,29);ctx.stroke();
  ctx.restore();
 
- // Collect coins
+ // Coin collection
  coinPlaces.forEach(c=>{
   if(!c.got&&Math.hypot(c.x-player.x,c.y-player.y)<27){
    c.got=true;coins++;
    document.getElementById("score").textContent="🪙 Coins: "+coins+" / 10";
    document.getElementById("message").textContent=
-   coins>=10?"🎉 You completed the mission!":"✨ Wonderful! Coin collected!";
+   coins>=10?"🎉 You won the village treasure reward!":"✨ Wonderful! Coin collected!";
+   if(coins>=10&&!rewardShown){
+    rewardShown=true;
+    setTimeout(()=>alert("🏆 CONGRATULATIONS! 🏆\nYou collected 10 coins!\nYou are the Dream Village Champion!"),100);
+   }
   }
  });
 }
@@ -188,8 +219,7 @@ function update(){
   player.x=Math.max(-850,Math.min(850,player.x));
   player.y=Math.max(-850,Math.min(850,player.y));
  }
- draw();
- requestAnimationFrame(update);
+ draw();requestAnimationFrame(update);
 }
 update();
 </script>
