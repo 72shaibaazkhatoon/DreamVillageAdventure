@@ -4,27 +4,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dream Village Adventure! </title>
+<title>Dream Village Adventure</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;overflow:hidden;font-family:Arial,sans-serif;background:#87ceeb}
 #game{position:fixed;inset:0}
-#hud{position:fixed;top:12px;left:12px;z-index:5;color:white;background:#183d2dcc;padding:12px 16px;border-radius:14px;font-weight:bold}
+#hud{position:fixed;top:12px;left:12px;z-index:5;color:white;background:#174c36ee;padding:12px 16px;border-radius:14px;font-weight:bold}
 #help{font-size:12px;margin-top:5px}
 #controls{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:5;display:grid;grid-template-columns:58px 58px 58px;gap:7px}
-button{border:0;border-radius:14px;background:#ffffffdd;color:#17452b;font-size:24px;font-weight:bold;width:58px;height:55px;box-shadow:0 3px 8px #0004;touch-action:none}
+button{border:0;border-radius:14px;background:#ffffffee;color:#17452b;font-size:24px;font-weight:bold;width:58px;height:55px;box-shadow:0 3px 8px #0004;touch-action:none}
 button:active{background:#ffe17b}
 #stop{font-size:14px;grid-column:2}
-#error{position:fixed;top:45%;left:10%;right:10%;z-index:10;background:white;padding:20px;border-radius:12px;display:none;color:#a00}
+#error{position:fixed;top:40%;left:10%;right:10%;z-index:10;background:white;padding:20px;border-radius:12px;display:none;color:#a00}
 </style>
 </head>
 <body>
+
 <div id="game"></div>
 <div id="hud">
 🌳 DREAM VILLAGE
 <div>🪙 Coins: <span id="coins">0</span></div>
 <div id="help">Explore your beautiful village!</div>
 </div>
+
 <div id="controls">
 <button id="up">⬆️</button>
 <button id="stop">STOP</button>
@@ -37,192 +39,313 @@ button:active{background:#ffe17b}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
+
 const errorBox=document.getElementById("error");
+
 if(!window.THREE){
  errorBox.style.display="block";
- errorBox.textContent="3D library could not load. Please refresh the game while connected to the internet.";
+ errorBox.textContent="3D library could not load. Please connect to the internet and refresh.";
  return;
 }
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x87ceeb);
-scene.fog=new THREE.Fog(0x87ceeb,65,145);
+scene.fog=new THREE.Fog(0x87ceeb,100,180);
 
 const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,250);
+
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled=true;
-renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.1;
+
 document.getElementById("game").appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0xffffff,0x668044,1.5));
-const sun=new THREE.DirectionalLight(0xffffff,1.4);
+// SOFTER LIGHTING
+scene.add(new THREE.HemisphereLight(0xffffff,0x668044,0.7));
+
+const sun=new THREE.DirectionalLight(0xffffff,0.8);
 sun.position.set(-25,40,25);
 sun.castShadow=true;
 scene.add(sun);
 
-function material(color){return new THREE.MeshStandardMaterial({color:color});}
+function material(color){
+ return new THREE.MeshStandardMaterial({color:color,roughness:0.9});
+}
+
 function box(x,y,z,sx,sy,sz,color){
- const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material(color));
+ const m=new THREE.Mesh(
+  new THREE.BoxGeometry(sx,sy,sz),
+  material(color)
+ );
  m.position.set(x,y,z);
- m.castShadow=true;m.receiveShadow=true;
- scene.add(m);return m;
+ m.castShadow=true;
+ m.receiveShadow=true;
+ scene.add(m);
+ return m;
 }
-function ground(){
- const g=new THREE.Mesh(new THREE.PlaneGeometry(150,150),material(0x64b85c));
- g.rotation.x=-Math.PI/2;g.position.y=-0.55;g.receiveShadow=true;scene.add(g);
-}
-ground();
 
-// Roads
-box(0,-0.46,0,7,0.12,105,0xc9b58b);
-box(0,-0.44,0,105,0.12,7,0xc9b58b);
-box(0,-0.40,0,18,0.14,18,0xe5cf9b);
+// GREEN GRASS
+const grass=new THREE.Mesh(
+ new THREE.PlaneGeometry(150,150),
+ new THREE.MeshBasicMaterial({color:0x48a83e})
+);
+grass.rotation.x=-Math.PI/2;
+grass.position.y=-0.55;
+scene.add(grass);
 
-// Road markings
+// VILLAGE ROADS
+box(0,-0.43,0,7,0.12,105,0xa97948);
+box(0,-0.42,0,105,0.12,7,0xa97948);
+
+// VILLAGE SQUARE
+box(0,-0.35,0,18,0.12,18,0xe5c987);
+
+// ROAD MARKINGS
 for(let i=-45;i<=45;i+=10){
- box(0,-0.31,i,0.18,0.04,4,0xffffff);
- box(i,-0.30,0,4,0.04,0.18,0xffffff);
+ box(0,-0.34,i,0.18,0.04,4,0xf8e7c3);
+ box(i,-0.34,0,4,0.04,0.18,0xf8e7c3);
 }
 
-// Houses
-function house(x,z,color){
+// HOUSES
+function house(x,z,color,roofColor){
+
  const group=new THREE.Group();
- const walls=new THREE.Mesh(new THREE.BoxGeometry(7,5,6),material(color));
- walls.position.y=2.0;walls.castShadow=true;group.add(walls);
 
- const roof=new THREE.Mesh(new THREE.ConeGeometry(5.2,3.2,4),material(0x9c3f2f));
- roof.position.y=6.0;roof.rotation.y=Math.PI/4;roof.castShadow=true;group.add(roof);
+ const walls=new THREE.Mesh(
+  new THREE.BoxGeometry(7,5,6),
+  material(color)
+ );
+ walls.position.y=2;
+ group.add(walls);
 
- const door=new THREE.Mesh(new THREE.BoxGeometry(1.3,2.5,0.15),material(0x60351e));
- door.position.set(0,1.25,3.08);group.add(door);
+ const roof=new THREE.Mesh(
+  new THREE.ConeGeometry(5.2,3.2,4),
+  material(roofColor)
+ );
+ roof.position.y=6;
+ roof.rotation.y=Math.PI/4;
+ group.add(roof);
 
- for(let wx of [-2.1,2.1]){
-  const w=new THREE.Mesh(new THREE.BoxGeometry(1.25,1.2,0.15),material(0x9de8ff));
-  w.position.set(wx,2.7,3.08);group.add(w);
+ const door=new THREE.Mesh(
+  new THREE.BoxGeometry(1.3,2.5,0.15),
+  material(0x60351e)
+ );
+ door.position.set(0,1.25,3.08);
+ group.add(door);
+
+ for(const wx of [-2.1,2.1]){
+  const w=new THREE.Mesh(
+   new THREE.BoxGeometry(1.25,1.2,0.15),
+   material(0x9de8ff)
+  );
+  w.position.set(wx,2.7,3.08);
+  group.add(w);
  }
+
  group.position.set(x,-0.45,z);
  scene.add(group);
 }
-house(-15,-16,0xffd27c);
-house(15,-16,0xff9d9d);
-house(-15,16,0xf5e6a8);
-house(15,16,0xb5d9ff);
-house(-32,-4,0xd9b3ff);
-house(32,5,0xffc2a1);
-house(-32,25,0xc4e9a0);
-house(32,-28,0xffe1a8);
 
-// Trees
+house(-15,-16,0xffd27c,0xc94b35);
+house(15,-16,0xff9d9d,0x8544aa);
+house(-15,16,0xf5e6a8,0xb84c35);
+house(15,16,0xb5d9ff,0x315caa);
+house(-32,-4,0xd9b3ff,0x7945a5);
+house(32,5,0xffc2a1,0x9d4d31);
+house(-32,25,0xc4e9a0,0x39864b);
+house(32,-28,0xffe1a8,0xb84c35);
+
+// TREES
 function tree(x,z){
- const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.45,.6,3,8),material(0x754522));
- trunk.position.set(x,1,z);trunk.castShadow=true;scene.add(trunk);
- const leaves=new THREE.Mesh(new THREE.SphereGeometry(2.2,12,10),material(0x238b45));
- leaves.position.set(x,3.7,z);leaves.castShadow=true;scene.add(leaves);
+
+ const trunk=new THREE.Mesh(
+  new THREE.CylinderGeometry(.45,.6,3,8),
+  material(0x754522)
+ );
+ trunk.position.set(x,1,z);
+ scene.add(trunk);
+
+ const leaves=new THREE.Mesh(
+  new THREE.SphereGeometry(2.2,12,10),
+  material(0x16863a)
+ );
+ leaves.position.set(x,3.7,z);
+ scene.add(leaves);
 }
-for(let i=0;i<42;i++){
- const x=(Math.random()-.5)*105;
- const z=(Math.random()-.5)*105;
+
+for(let i=0;i<48;i++){
+ const x=(Math.random()-.5)*110;
+ const z=(Math.random()-.5)*110;
  if(Math.abs(x)<23&&Math.abs(z)<23)continue;
  tree(x,z);
 }
 
-// Farm
+// FARM
 box(-28,-0.35,0,15,.25,18,0x81502d);
+
 for(let i=0;i<5;i++){
- const row=box(-34+i*3,-0.15,0,0.16,.15,16,0x4e9b36);
+ box(-34+i*3,-0.15,0,.16,.15,16,0x4e9b36);
+
  for(let j=-6;j<=6;j+=3){
-  const crop=new THREE.Mesh(new THREE.SphereGeometry(.55,8,8),material(0x8bd34a));
-  crop.position.set(-34+i*3,.6,j);scene.add(crop);
+  const crop=new THREE.Mesh(
+   new THREE.SphereGeometry(.55,8,8),
+   material(0x8bd34a)
+  );
+  crop.position.set(-34+i*3,.6,j);
+  scene.add(crop);
  }
 }
 
-// Pond
-const pond=new THREE.Mesh(new THREE.CircleGeometry(7,32),material(0x39bde0));
-pond.rotation.x=-Math.PI/2;pond.position.set(28,-0.35,30);scene.add(pond);
+// BLUE POND
+const pond=new THREE.Mesh(
+ new THREE.CircleGeometry(7,32),
+ new THREE.MeshBasicMaterial({color:0x159bd0})
+);
+pond.rotation.x=-Math.PI/2;
+pond.position.set(28,-0.35,30);
+scene.add(pond);
 
-// Bridge
+// WOODEN BRIDGE
 box(28,0.2,30,4,.4,13,0x9a6334);
+
 for(let z=24;z<=36;z+=4){
  box(25.7,1,z,.25,1.4,.25,0x754522);
  box(30.3,1,z,.25,1.4,.25,0x754522);
 }
 
-// Player
+// PLAYER
 const player=new THREE.Group();
-const body=new THREE.Mesh(new THREE.BoxGeometry(1.2,1.8,.8),material(0x286be0));
-body.position.y=1.5;body.castShadow=true;player.add(body);
-const head=new THREE.Mesh(new THREE.SphereGeometry(.65,16,12),material(0xffc58a));
-head.position.y=2.8;head.castShadow=true;player.add(head);
-const legs=[];
-for(let x of [-.35,.35]){
- const leg=new THREE.Mesh(new THREE.BoxGeometry(.35,.9,.4),material(0x26334d));
- leg.position.set(x,.45,0);player.add(leg);legs.push(leg);
+
+const body=new THREE.Mesh(
+ new THREE.BoxGeometry(1.2,1.8,.8),
+ material(0x286be0)
+);
+body.position.y=1.5;
+player.add(body);
+
+const head=new THREE.Mesh(
+ new THREE.SphereGeometry(.65,16,12),
+ material(0xffc58a)
+);
+head.position.y=2.8;
+player.add(head);
+
+for(const x of [-.35,.35]){
+ const leg=new THREE.Mesh(
+  new THREE.BoxGeometry(.35,.9,.4),
+  material(0x26334d)
+ );
+ leg.position.set(x,.45,0);
+ player.add(leg);
 }
-player.position.set(0,0,0);
+
 scene.add(player);
 
-// Coins
+// GOLD COINS
 const coins=[];
+
 for(let i=0;i<14;i++){
- const coin=new THREE.Mesh(new THREE.TorusGeometry(.65,.18,8,16),material(0xffd21c));
- coin.position.set((Math.random()-.5)*65,1.1,(Math.random()-.5)*65);
- coin.castShadow=true;scene.add(coin);coins.push(coin);
+ const coin=new THREE.Mesh(
+  new THREE.TorusGeometry(.65,.18,8,16),
+  new THREE.MeshBasicMaterial({color:0xffd21c})
+ );
+ coin.position.set(
+  (Math.random()-.5)*65,
+  1.1,
+  (Math.random()-.5)*65
+ );
+ scene.add(coin);
+ coins.push(coin);
 }
 
 let count=0;
 let dx=0,dz=0;
-function move(direction){
- dx=direction[0];dz=direction[1];
-}
-function stop(){dx=0;dz=0;}
 
-const controls={
- up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]
+function move(x,z){
+ dx=x;
+ dz=z;
+}
+function stop(){
+ dx=0;
+ dz=0;
+}
+
+const directions={
+ up:[0,-1],
+ down:[0,1],
+ left:[-1,0],
+ right:[1,0]
 };
-Object.keys(controls).forEach(id=>{
- const btn=document.getElementById(id);
- btn.addEventListener("pointerdown",e=>{e.preventDefault();move(controls[id]);});
- btn.addEventListener("pointerup",stop);
- btn.addEventListener("pointerleave",stop);
- btn.addEventListener("pointercancel",stop);
+
+Object.keys(directions).forEach(id=>{
+ const button=document.getElementById(id);
+
+ button.addEventListener("pointerdown",e=>{
+  e.preventDefault();
+  move(...directions[id]);
+ });
+
+ button.addEventListener("pointerup",stop);
+ button.addEventListener("pointerleave",stop);
+ button.addEventListener("pointercancel",stop);
 });
+
 document.getElementById("stop").addEventListener("click",stop);
 
 window.addEventListener("keydown",e=>{
- if(e.key==="ArrowUp"||e.key==="w")move([0,-1]);
- if(e.key==="ArrowDown"||e.key==="s")move([0,1]);
- if(e.key==="ArrowLeft"||e.key==="a")move([-1,0]);
- if(e.key==="ArrowRight"||e.key==="d")move([1,0]);
+ if(e.key==="ArrowUp"||e.key==="w")move(0,-1);
+ if(e.key==="ArrowDown"||e.key==="s")move(0,1);
+ if(e.key==="ArrowLeft"||e.key==="a")move(-1,0);
+ if(e.key==="ArrowRight"||e.key==="d")move(1,0);
 });
+
 window.addEventListener("keyup",e=>{
  if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","w","a","s","d"].includes(e.key))stop();
 });
 
 function animate(){
+
  requestAnimationFrame(animate);
+
  player.position.x+=dx*.13;
  player.position.z+=dz*.13;
+
  player.position.x=Math.max(-48,Math.min(48,player.position.x));
  player.position.z=Math.max(-48,Math.min(48,player.position.z));
 
  coins.forEach((coin,index)=>{
   coin.rotation.y+=.035;
   coin.position.y=1.1+Math.sin(Date.now()*.003+index)*.15;
+
   if(coin.visible&&coin.position.distanceTo(player.position)<1.8){
-   coin.visible=false;count++;
+   coin.visible=false;
+   count++;
    document.getElementById("coins").textContent=count;
   }
  });
 
  camera.position.lerp(
-  new THREE.Vector3(player.position.x,player.position.y+13,player.position.z+19),
+  new THREE.Vector3(
+   player.position.x,
+   player.position.y+13,
+   player.position.z+19
+  ),
   .08
  );
- camera.lookAt(player.position.x,player.position.y+1,player.position.z);
+
+ camera.lookAt(
+  player.position.x,
+  player.position.y+1,
+  player.position.z
+ );
+
  renderer.render(scene,camera);
 }
+
 animate();
 
 window.addEventListener("resize",()=>{
@@ -230,6 +353,7 @@ window.addEventListener("resize",()=>{
  camera.updateProjectionMatrix();
  renderer.setSize(innerWidth,innerHeight);
 });
+
 })();
 </script>
 </body>
