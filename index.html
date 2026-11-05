@@ -25,34 +25,36 @@ button{border:2px solid white;border-radius:14px;background:#ffffffbb;font-size:
 <body>
 
 <div id="hud">
-<div id="title">🌈 DREAM VILLAGE V12</div>
-<div id="score">🪙 Coins: 0 / 10</div>
-<div id="message">Explore, meet animals and collect coins!</div>
+ <div id="title">🌈 DREAM VILLAGE V12</div>
+ <div id="score">🪙 Coins: 0 / 10</div>
+ <div id="message">Explore, meet animals and collect coins!</div>
 </div>
 
 <canvas id="game"></canvas>
 
 <div id="controls">
-<div class="pad">
-<button class="up" data-key="up">⬆️</button>
-<button class="left" data-key="left">⬅️</button>
-<button class="down" data-key="down">⬇️</button>
-<button class="right" data-key="right">➡️</button>
-</div>
+ <div class="pad">
+  <button class="up" data-key="up">⬆️</button>
+  <button class="left" data-key="left">⬅️</button>
+  <button class="down" data-key="down">⬇️</button>
+  <button class="right" data-key="right">➡️</button>
+ </div>
 </div>
 
 <script>
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 
-let W,H;
+let W=innerWidth,H=innerHeight;
+let dpr=1;
+
 function resize(){
- const dpr=window.devicePixelRatio||1;
- canvas.width=innerWidth*dpr;
- canvas.height=innerHeight*dpr;
- ctx.setTransform(dpr,0,0,dpr,0,0);
+ dpr=window.devicePixelRatio||1;
  W=innerWidth;
  H=innerHeight;
+ canvas.width=W*dpr;
+ canvas.height=H*dpr;
+ ctx.setTransform(dpr,0,0,dpr,0,0);
 }
 addEventListener("resize",resize);
 resize();
@@ -80,17 +82,17 @@ addEventListener("blur",()=>{
  Object.keys(keys).forEach(k=>keys[k]=false);
 });
 
-document.querySelectorAll("button[data-key]").forEach(b=>{
- const k=b.dataset.key;
+document.querySelectorAll("button[data-key]").forEach(button=>{
+ const key=button.dataset.key;
 
- b.addEventListener("pointerdown",e=>{
+ button.addEventListener("pointerdown",e=>{
   e.preventDefault();
-  keys[k]=true;
-  b.setPointerCapture(e.pointerId);
+  keys[key]=true;
+  button.setPointerCapture(e.pointerId);
  });
 
- ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>{
-  b.addEventListener(ev,()=>keys[k]=false);
+ ["pointerup","pointercancel","lostpointercapture"].forEach(event=>{
+  button.addEventListener(event,()=>keys[key]=false);
  });
 });
 
@@ -100,17 +102,16 @@ const camera={x:0,y:0};
 
 let coins=0;
 let frame=0;
-let rewardShown=false;
 let walkPhase=0;
-let facing=1;
+let rewardShown=false;
 
 const coinPlaces=[];
 for(let i=0;i<24;i++){
- const a=i*2.4;
- const r=100+(i%5)*75;
+ const angle=i*2.4;
+ const radius=100+(i%5)*75;
  coinPlaces.push({
-  x:Math.cos(a)*r,
-  y:Math.sin(a)*r,
+  x:Math.cos(angle)*radius,
+  y:Math.sin(angle)*radius,
   got:false
  });
 }
@@ -128,11 +129,11 @@ const houses=[
 
 const trees=[];
 for(let i=0;i<45;i++){
- const a=i*2.4;
- const r=330+(i%4)*55;
+ const angle=i*2.4;
+ const radius=330+(i%4)*55;
  trees.push({
-  x:Math.cos(a)*r,
-  y:Math.sin(a)*r
+  x:Math.cos(angle)*radius,
+  y:Math.sin(angle)*radius
  });
 }
 
@@ -155,8 +156,8 @@ function rounded(x,y,w,h,r,color){
  ctx.fill();
 }
 
-function drawHouse(x,y,c){
- rounded(x-39,y-27,78,57,8,c);
+function drawHouse(x,y,color){
+ rounded(x-39,y-27,78,57,8,color);
 
  ctx.fillStyle="#93482e";
  ctx.beginPath();
@@ -214,29 +215,33 @@ function drawShop(){
  ctx.fillText("VILLAGE SHOP",0,-370);
 }
 
-function drawAnimal(a){
+function drawAnimal(animal){
  ctx.font="30px Arial";
  ctx.textAlign="center";
- ctx.fillText(a.type,a.x,a.y+Math.sin(frame*.1+a.x)*3);
+ ctx.fillText(
+  animal.type,
+  animal.x,
+  animal.y+Math.sin(frame*.1+animal.x)*3
+ );
 }
 
-// IMPROVED CHARACTER WALKING
-function drawPlayer(){
+// CHARACTER
+// IMPORTANT: This character is drawn on the SCREEN layer,
+// separately from the moving village and camera.
+function drawPlayer(screenX,screenY){
 
  const walking=keys.up||keys.down||keys.left||keys.right;
-
  const step=walking?Math.sin(walkPhase):0;
  const opposite=walking?Math.sin(walkPhase+Math.PI):0;
 
  const leftLift=walking?Math.max(0,Math.cos(walkPhase))*7:0;
  const rightLift=walking?Math.max(0,-Math.cos(walkPhase))*7:0;
-
  const bob=walking?Math.abs(Math.sin(walkPhase*2))*2.2:0;
 
  ctx.save();
- ctx.translate(player.x,player.y-bob);
+ ctx.translate(screenX,screenY-bob);
 
- // Ground shadow
+ // Shadow
  ctx.fillStyle="#287b32";
  ctx.beginPath();
  ctx.ellipse(0,20,19+Math.abs(step)*2,6,0,0,Math.PI*2);
@@ -256,7 +261,7 @@ function drawPlayer(){
  ctx.quadraticCurveTo(16,1,12,7);
  ctx.stroke();
 
- // LEGS: alternating steps with bent knees
+ // Legs
  function leg(side,movement,lift){
   const hipX=side*6;
   const kneeX=hipX+movement*5;
@@ -278,12 +283,10 @@ function drawPlayer(){
   ctx.save();
   ctx.translate(footX,footY+2);
   ctx.rotate(movement*.12);
-
   ctx.fillStyle="#ff5795";
   ctx.beginPath();
   ctx.ellipse(0,0,8,4.5,0,0,Math.PI*2);
   ctx.fill();
-
   ctx.fillStyle="#fff";
   ctx.fillRect(-4,-2,5,2);
   ctx.restore();
@@ -292,13 +295,11 @@ function drawPlayer(){
  leg(-1,step,leftLift);
  leg(1,opposite,rightLift);
 
- // ARMS: swing opposite to the legs
+ // Arms
  function arm(side,movement){
   const shoulderX=side*12;
   const elbowX=shoulderX+movement*.55;
   const handX=shoulderX+movement;
-  const elbowY=-1;
-  const handY=5;
 
   ctx.strokeStyle="#ffc28f";
   ctx.lineWidth=7;
@@ -307,30 +308,32 @@ function drawPlayer(){
 
   ctx.beginPath();
   ctx.moveTo(shoulderX,-8);
-  ctx.lineTo(elbowX,elbowY);
-  ctx.lineTo(handX,handY);
+  ctx.lineTo(elbowX,-1);
+  ctx.lineTo(handX,5);
   ctx.stroke();
 
   ctx.fillStyle="#ffd0a4";
   ctx.beginPath();
-  ctx.arc(handX,handY,4,0,Math.PI*2);
+  ctx.arc(handX,5,4,0,Math.PI*2);
   ctx.fill();
  }
 
  arm(-1,walking?-step*9:0);
  arm(1,walking?step*9:0);
 
- // Body
+ // Body and rainbow dress
  rounded(-14,-13,28,28,9,"#a54bc7");
  rounded(-12,-12,24,25,7,"#ff71a7");
 
- // Rainbow dress
  ctx.save();
  ctx.beginPath();
  ctx.roundRect(-12,-12,24,25,7);
  ctx.clip();
 
- const colours=["#ffcf52","#ff83a9","#9c7bff","#57cfff","#69df9b"];
+ const colours=[
+  "#ffcf52","#ff83a9","#9c7bff",
+  "#57cfff","#69df9b"
+ ];
 
  for(let i=0;i<5;i++){
   ctx.fillStyle=colours[i];
@@ -434,47 +437,35 @@ function drawPlayer(){
  ctx.restore();
 }
 
-// CAMERA: PLAYER MOVES ON SCREEN FIRST
-// Camera follows only when player reaches the screen boundary zone.
+// CAMERA
+// The player can walk across the screen first.
+// The camera moves only when the player reaches the edge zones.
 function updateCamera(){
 
- const minX=W*.32;
- const maxX=W*.68;
- const minY=H*.30;
- const maxY=H*.68;
+ const minX=W*.18;
+ const maxX=W*.82;
+ const minY=H*.18;
+ const maxY=H*.72;
 
  const screenX=W/2+player.x-camera.x;
  const screenY=H/2+player.y-camera.y;
 
- let targetX=camera.x;
- let targetY=camera.y;
+ const desiredX=Math.max(minX,Math.min(maxX,screenX));
+ const desiredY=Math.max(minY,Math.min(maxY,screenY));
 
- if(screenX<minX){
-  targetX=W/2+player.x-minX;
- }
- if(screenX>maxX){
-  targetX=W/2+player.x-maxX;
- }
- if(screenY<minY){
-  targetY=H/2+player.y-minY;
- }
- if(screenY>maxY){
-  targetY=H/2+player.y-maxY;
- }
+ const targetCameraX=camera.x+screenX-desiredX;
+ const targetCameraY=camera.y+screenY-desiredY;
 
- camera.x+=(targetX-camera.x)*.18;
- camera.y+=(targetY-camera.y)*.18;
+ camera.x+=(targetCameraX-camera.x)*.22;
+ camera.y+=(targetCameraY-camera.y)*.22;
 }
 
-// VILLAGE WORLD
-function draw(){
-
- frame++;
+// DRAW VILLAGE WORLD
+function drawWorld(){
 
  ctx.fillStyle="#63c94d";
  ctx.fillRect(0,0,W,H);
 
- // Camera controls the world view
  ctx.save();
  ctx.translate(W/2-camera.x,H/2-camera.y);
 
@@ -487,9 +478,11 @@ function draw(){
  ctx.fillRect(-1000,-4,2000,8);
  ctx.fillRect(-4,-1000,8,2000);
 
+ // Houses and trees
  houses.forEach(h=>drawHouse(h[0],h[1],h[2]));
  trees.forEach(t=>drawTree(t.x,t.y));
 
+ // Shop
  drawShop();
 
  // Flowers
@@ -557,12 +550,15 @@ function draw(){
   ctx.fillText("$",c.x,c.y+coinBob+5);
  });
 
- // Character is drawn at actual world position
- drawPlayer();
-
  ctx.restore();
 
- // Collect coins
+ // IMPORTANT:
+ // Character is NOT drawn in the village world.
+ // It is drawn separately in draw().
+}
+
+// COIN COLLECTION
+function collectCoins(){
  coinPlaces.forEach(c=>{
   if(!c.got&&Math.hypot(c.x-player.x,c.y-player.y)<27){
    c.got=true;
@@ -611,8 +607,6 @@ function update(){
   player.x+=dx*3;
   player.y+=dy*3;
 
-  if(dx!==0)facing=dx>0?1:-1;
-
   walkPhase+=.24;
  }
 
@@ -620,7 +614,19 @@ function update(){
  player.y=Math.max(-850,Math.min(850,player.y));
 
  updateCamera();
- draw();
+ collectCoins();
+
+ frame++;
+
+ // Draw the moving village first.
+ drawWorld();
+
+ // Calculate the character's actual screen position.
+ const screenX=W/2+player.x-camera.x;
+ const screenY=H/2+player.y-camera.y;
+
+ // Draw character separately, above the moving village.
+ drawPlayer(screenX,screenY);
 
  requestAnimationFrame(update);
 }
