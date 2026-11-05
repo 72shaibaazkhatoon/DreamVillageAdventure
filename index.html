@@ -1,196 +1,268 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dream Village Adventure</title>
+<title>Dream Village Adventure 3D</title>
 <style>
 *{box-sizing:border-box}
 body{
  margin:0;
- font-family:Arial,sans-serif;
- text-align:center;
- background:linear-gradient(#83d8ff,#d9f7c5);
- color:#23452b;
+ overflow:hidden;
+ font-family:Arial;
+ background:#87ceeb;
 }
-h1{margin:15px 5px;font-size:27px}
-#stats{
- display:flex;
- justify-content:space-around;
- flex-wrap:wrap;
- gap:8px;
- margin:12px;
- font-weight:bold;
+#game{width:100vw;height:100vh;display:block}
+#hud{
+ position:absolute;top:12px;left:12px;
+ color:white;background:#173c28cc;
+ padding:12px;border-radius:14px;
+ font-weight:bold;line-height:1.8;
 }
-canvas{
- width:94%;
- max-width:600px;
- background:#9be477;
- border:4px solid #fff;
- border-radius:15px;
- touch-action:none;
+#controls{
+ position:absolute;bottom:20px;left:0;right:0;
+ display:flex;justify-content:space-between;
+ padding:0 25px;pointer-events:none;
 }
-.controls{
- margin:12px auto;
- display:grid;
- grid-template-columns:60px 60px 60px;
- justify-content:center;
- gap:7px;
-}
+.pad{display:grid;grid-template-columns:55px 55px 55px;gap:5px}
 button{
- border:0;
- border-radius:12px;
- padding:15px;
- background:#287d42;
- color:white;
- font-size:20px;
- font-weight:bold;
+ pointer-events:auto;border:0;border-radius:14px;
+ background:#ffffffcc;color:#17472c;
+ font-size:25px;font-weight:bold;
+ width:55px;height:55px;
 }
-button:active{background:#145329}
-#message{font-weight:bold;min-height:25px}
+button:active{background:#8df2a0}
+#hint{
+ position:absolute;bottom:95px;width:100%;
+ text-align:center;color:white;
+ font-weight:bold;text-shadow:1px 2px 3px #333;
+}
 </style>
 </head>
 <body>
-
-<h1>🏡 Dream Village Adventure</h1>
-
-<div id="stats">
- <span>🪙 Coins: <span id="coins">0</span></span>
- <span>🌸 Flowers: <span id="flowers">0</span></span>
- <span>⭐ Level: <span id="level">1</span></span>
+<div id="hud">
+🏡 Dream Village 3D<br>
+🪙 Coins: <span id="coins">0</span><br>
+⭐ Level: <span id="level">1</span>
 </div>
-
-<canvas id="game" width="600" height="400"></canvas>
-
-<div class="controls">
- <span></span><button onclick="move(0,-1)">⬆️</button><span></span>
- <button onclick="move(-1,0)">⬅️</button>
- <button onclick="move(0,1)">⬇️</button>
- <button onclick="move(1,0)">➡️</button>
+<div id="hint">Explore your beautiful village!</div>
+<div id="controls">
+ <div class="pad">
+  <span></span><button onclick="setMove('up')">⬆</button><span></span>
+  <button onclick="setMove('left')">⬅</button>
+  <button onclick="setMove('down')">⬇</button>
+  <button onclick="setMove('right')">➡</button>
+ </div>
+ <button onclick="setMove('stop')">⏹</button>
 </div>
-
-<p id="message">Explore the village and collect treasures!</p>
-<button onclick="restart()">🔄 Restart Game</button>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+scene.fog=new THREE.Fog(0x87ceeb,25,90);
 
-let player={x:300,y:200};
-let coins=0,flowers=0,level=1;
+const camera=new THREE.PerspectiveCamera(
+ 65,window.innerWidth/window.innerHeight,0.1,200
+);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+document.body.appendChild(renderer.domElement);
+renderer.domElement.id="game";
 
-let treasures=[
- {x:100,y:100,type:"coin"},
- {x:500,y:100,type:"flower"},
- {x:200,y:300,type:"coin"},
- {x:450,y:300,type:"flower"},
- {x:300,y:80,type:"coin"},
- {x:100,y:300,type:"flower"}
-];
+scene.add(new THREE.HemisphereLight(0xffffff,0x668855,2));
+const sun=new THREE.DirectionalLight(0xffffff,2);
+sun.position.set(-15,25,15);
+sun.castShadow=true;
+scene.add(sun);
 
-function draw(){
- ctx.clearRect(0,0,600,400);
+const material=(color)=>new THREE.MeshStandardMaterial({color});
+const grassMat=material(0x62b94f);
+const roadMat=material(0xd8bd86);
+const brownMat=material(0x80502d);
+const greenMat=material(0x278b43);
 
- // Grass
- ctx.fillStyle="#8bd66b";
- ctx.fillRect(0,0,600,400);
-
- // Path
- ctx.fillStyle="#d8bd83";
- ctx.fillRect(0,175,600,55);
- ctx.fillRect(270,0,55,400);
-
- // Houses
- house(35,35,"🏠");
- house(475,35,"🏡");
- house(35,310,"🏠");
- house(475,310,"🏡");
-
- // Trees
- ["🌳","🌲","🌳","🌲"].forEach((t,i)=>{
-  ctx.font="38px Arial";
-  ctx.fillText(t,[180,400,180,400][i],[60,60,350,350][i]);
- });
-
- // Cow
- ctx.font="38px Arial";
- ctx.fillText("🐄",350,150);
-
- // Treasures
- treasures.forEach(t=>{
-  ctx.font="27px Arial";
-  ctx.fillText(t.type==="coin"?"🪙":"🌸",t.x,t.y);
- });
-
- // Player
- ctx.font="38px Arial";
- ctx.fillText("🧑",player.x-18,player.y+12);
+function cube(w,h,d,x,y,z,mat){
+ const mesh=new THREE.Mesh(
+  new THREE.BoxGeometry(w,h,d),mat
+ );
+ mesh.position.set(x,y,z);
+ mesh.castShadow=true;
+ mesh.receiveShadow=true;
+ scene.add(mesh);
+ return mesh;
 }
-
-function house(x,y,emoji){
- ctx.font="55px Arial";
- ctx.fillText(emoji,x,y+45);
-}
-
-function move(dx,dy){
- player.x=Math.max(20,Math.min(580,player.x+dx*25));
- player.y=Math.max(25,Math.min(375,player.y+dy*25));
- collect();
- draw();
-}
-
-function collect(){
- treasures=treasures.filter(t=>{
-  if(Math.hypot(t.x-player.x,t.y-player.y)<35){
-   if(t.type==="coin"){
-    coins++;
-    document.getElementById("message").textContent="Amazing! You found a coin!";
-   }else{
-    flowers++;
-    document.getElementById("message").textContent="Beautiful flower collected!";
-   }
-   return false;
-  }
-  return true;
- });
-
- level=Math.floor(coins/5)+1;
- document.getElementById("coins").textContent=coins;
- document.getElementById("flowers").textContent=flowers;
- document.getElementById("level").textContent=level;
-
- if(treasures.length===0){
-  document.getElementById("message").textContent="🎉 Village explorer! You collected everything!";
- }
-}
-
-function restart(){
- player={x:300,y:200};
- coins=0;flowers=0;level=1;
- treasures=[
-  {x:100,y:100,type:"coin"},
-  {x:500,y:100,type:"flower"},
-  {x:200,y:300,type:"coin"},
-  {x:450,y:300,type:"flower"},
-  {x:300,y:80,type:"coin"},
-  {x:100,y:300,type:"flower"}
- ];
- document.getElementById("coins").textContent=0;
- document.getElementById("flowers").textContent=0;
- document.getElementById("level").textContent=1;
- document.getElementById("message").textContent="Explore the village and collect treasures!";
- draw();
-}
-
-document.addEventListener("keydown",e=>{
- if(e.key==="ArrowUp")move(0,-1);
- if(e.key==="ArrowDown")move(0,1);
- if(e.key==="ArrowLeft")move(-1,0);
- if(e.key==="ArrowRight")move(1,0);
-});
-
-draw();
 </script>
 </body>
 </html>
+
+<script>
+// Create the village ground
+cube(200,1,200,0,-0.6,0,grassMat);
+
+// Village roads
+cube(12,0.08,180,0,0,0,roadMat);
+cube(180,0.08,12,0,0,0,roadMat);
+
+// Build colorful houses
+function makeHouse(x,z,color){
+ cube(7,5,7,x,2.5,z,material(color));
+ const roof=new THREE.Mesh(
+  new THREE.ConeGeometry(5.7,3.5,4),
+  material(0x9b382c)
+ );
+ roof.position.set(x,6.7,z);
+ roof.rotation.y=Math.PI/4;
+ roof.castShadow=true;
+ scene.add(roof);
+ cube(1.5,2.7,0.15,x,1.35,z+3.58,material(0x50301d));
+ cube(1.4,1.3,0.15,x+2,3,z+3.62,material(0x9ee5ff));
+}
+
+makeHouse(-19,-18,0xffd166);
+makeHouse(19,-18,0xff9f80);
+makeHouse(-19,19,0xb5a0ff);
+makeHouse(19,19,0xffd6e7);
+
+// Trees
+function makeTree(x,z){
+ const trunk=new THREE.Mesh(
+  new THREE.CylinderGeometry(.45,.65,3,8),
+  brownMat
+ );
+ trunk.position.set(x,1.5,z);
+ scene.add(trunk);
+
+ const leaves=new THREE.Mesh(
+  new THREE.SphereGeometry(2.2,12,10),
+  greenMat
+ );
+ leaves.position.set(x,4,z);
+ scene.add(leaves);
+}
+for(let i=0;i<35;i++){
+ let x=(Math.random()-.5)*85;
+ let z=(Math.random()-.5)*85;
+ if(Math.abs(x)>27 || Math.abs(z)>27) makeTree(x,z);
+}
+
+// Player character
+const player=new THREE.Group();
+const skin=material(0xffc18a);
+const shirt=material(0x2879e8);
+const pants=material(0x303d68);
+
+function part(w,h,d,x,y,z,mat){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+ m.position.set(x,y,z);
+ player.add(m);
+ return m;
+}
+part(.8,1.1,.45,0,1.45,0,shirt);
+part(.5,.5,.5,0,2.3,0,skin);
+part(.18,.8,.22,-.25,.45,0,pants);
+part(.18,.8,.22,.25,.45,0,pants);
+part(.2,.8,.22,-.55,1.45,0,skin);
+part(.2,.8,.22,.55,1.45,0,skin);
+scene.add(player);
+player.position.set(0,0,0);
+
+// Coins
+const coinMat=new THREE.MeshStandardMaterial({
+ color:0xffd700,metalness:.8,roughness:.2
+});
+const coins3d=[];
+for(let i=0;i<12;i++){
+ const coin=new THREE.Mesh(
+  new THREE.TorusGeometry(.55,.16,10,20),
+  coinMat
+ );
+ coin.position.set(
+  (Math.random()-.5)*65,1,
+  (Math.random()-.5)*65
+ );
+ scene.add(coin);
+ coins3d.push(coin);
+}
+
+// Movement
+let direction="stop";
+function setMove(d){direction=d;}
+window.addEventListener("keydown",e=>{
+ if(e.key==="ArrowUp"||e.key==="w")direction="up";
+ if(e.key==="ArrowDown"||e.key==="s")direction="down";
+ if(e.key==="ArrowLeft"||e.key==="a")direction="left";
+ if(e.key==="ArrowRight"||e.key==="d")direction="right";
+});
+window.addEventListener("keyup",()=>direction="stop");
+
+let totalCoins=0;
+function updateCoins(){
+ for(let i=coins3d.length-1;i>=0;i--){
+  const coin=coins3d[i];
+  if(player.position.distanceTo(coin.position)<1.8){
+   scene.remove(coin);
+   coins3d.splice(i,1);
+   totalCoins++;
+   document.getElementById("coins").textContent=totalCoins;
+   document.getElementById("level").textContent=
+    Math.floor(totalCoins/5)+1;
+   document.getElementById("hint").textContent="✨ Coin collected!";
+  }
+ }
+}
+</script>
+</body>
+</html>
+
+<script>
+// Camera follows the player
+camera.position.set(0,9,13);
+camera.lookAt(player.position);
+
+function animate(){
+ requestAnimationFrame(animate);
+
+ // Player movement
+ const speed=0.13;
+ if(direction==="up")player.position.z-=speed;
+ if(direction==="down")player.position.z+=speed;
+ if(direction==="left")player.position.x-=speed;
+ if(direction==="right")player.position.x+=speed;
+
+ player.position.x=Math.max(-85,Math.min(85,player.position.x));
+ player.position.z=Math.max(-85,Math.min(85,player.position.z));
+
+ // Rotate collected coins
+ coins3d.forEach(coin=>{
+  coin.rotation.y+=0.04;
+  coin.rotation.x+=0.01;
+ });
+
+ // Camera follows character
+ const targetCamera=new THREE.Vector3(
+  player.position.x,
+  player.position.y+8,
+  player.position.z+12
+ );
+ camera.position.lerp(targetCamera,0.08);
+ camera.lookAt(
+  player.position.x,
+  player.position.y+1,
+  player.position.z
+ );
+
+ updateCoins();
+ renderer.render(scene,camera);
+}
+
+window.addEventListener("resize",()=>{
+ camera.aspect=window.innerWidth/window.innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(window.innerWidth,window.innerHeight);
+});
+
+animate();
+</script>
