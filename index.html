@@ -3,200 +3,165 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Dream Village Adventure</title>
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;font-family:Arial,sans-serif;
- background:linear-gradient(#80dcff,#d9f7ff);
- text-align:center;color:#304b36;
-}
-header{padding:15px}
-h1{color:#ff7b35;text-shadow:1px 2px white}
-#village{
- height:270px;position:relative;overflow:hidden;
- background:linear-gradient(#76d9ff 55%,#75d85c 55%);
- border-bottom:8px solid #4da83d;
-}
-.sun{position:absolute;right:25px;top:15px;font-size:55px}
-.cloud{position:absolute;left:10%;top:25px;font-size:40px}
-.house{position:absolute;bottom:12px;font-size:75px}
-.h1{left:5%}.h2{left:38%}.h3{right:5%}
-.tree{position:absolute;bottom:12px;font-size:48px}
-.t1{left:23%}.t2{right:25%}
-.friends{font-size:55px;margin-top:12px}
-.panel{
- background:white;margin:14px auto;padding:15px;
- width:92%;max-width:500px;border-radius:22px;
- box-shadow:0 5px 15px #438b8844;
-}
-button{
- border:0;border-radius:18px;padding:13px 20px;
- margin:6px;font-size:17px;font-weight:bold;
- background:#ffbd42;color:#593b14;
- cursor:pointer;touch-action:manipulation;
-}
-button:active{transform:scale(.96)}
-#play{background:#ff713e;color:white;font-size:23px;padding:15px 45px}
-#game{display:none}
-canvas{
- width:100%;max-width:600px;
- background:linear-gradient(#8cddff 60%,#79d85a 60%);
- border-radius:15px;touch-action:none;
-}
-.controls button{min-width:105px;background:#78d8ff}
-#message{font-weight:bold;min-height:25px}
+body{margin:0;background:#172b24;font-family:Arial;color:white;text-align:center;overflow:hidden}
+header{padding:10px;background:#245d40}
+h2{margin:5px;font-size:23px}
+#stats{display:flex;justify-content:space-around;padding:10px;background:#183c2d}
+#game{display:block;width:100%;height:calc(100dvh - 190px);background:#8acb70;touch-action:none}
+.controls{display:flex;justify-content:center;gap:22px;padding:10px;background:#183c2d}
+button{background:#f4c64e;color:#263a26;border:0;border-radius:14px;padding:13px 20px;font-size:22px;font-weight:bold}
+button:active{background:#fff}
+#message{font-size:13px;padding:5px}
 </style>
 </head>
 <body>
 <header>
-<h1>🌈 Dream Village Adventure</h1>
-<div>✨ Run • Solve • Explore ✨</div>
+<h2>🌳 Dream Village Adventure 🌳</h2>
+<div>Welcome to your little village!</div>
 </header>
-
-<div id="home">
-<div id="village">
-<div class="sun">☀️</div>
-<div class="cloud">☁️</div>
-<div class="house h1">🏡</div>
-<div class="house h2">🏠</div>
-<div class="house h3">🏡</div>
-<div class="tree t1">🌳</div>
-<div class="tree t2">🌴</div>
+<div id="stats">
+<span>🪙 Coins: <b id="coins">0</b></span>
+<span>⭐ Level: <b id="level">1</b></span>
+<span>🌻 Flowers: <b id="flowers">0</b></span>
 </div>
-<div class="panel">
-<h2>Meet Your Friends!</h2>
-<div class="friends" id="friends">👧 👦 🐶</div>
-<p>Choose your adventure friend:</p>
-<button onclick="choose('👧')">👧 Girl</button>
-<button onclick="choose('👦')">👦 Boy</button>
-<button onclick="choose('🐶')">🐶 Puppy</button>
-<br><br>
-<button id="play" onclick="startGame()">▶ PLAY</button>
-<p>Collect coins and explore the village!</p>
-</div>
-</div>
-
-<div id="game">
-<div class="panel">
-<h2>🏃 Coin Adventure</h2>
-<p>Coins: <span id="score">0</span> | Lives: <span id="lives">3</span></p>
-<canvas id="canvas" width="600" height="300"></canvas>
+<canvas id="game"></canvas>
+<div id="message">Collect the golden coins and explore!</div>
 <div class="controls">
-<button onclick="jump()">⬆ JUMP</button>
-<button onclick="move()">➡ MOVE</button>
+<button data-dir="up">⬆️</button>
+<button data-dir="left">⬅️</button>
+<button data-dir="down">⬇️</button>
+<button data-dir="right">➡️</button>
 </div>
-<p id="message">Collect coins and avoid obstacles!</p>
-<button onclick="showPuzzle()">🧩 Village Puzzle</button>
-<button onclick="backHome()">🏡 Home</button>
-</div>
-</div>
-
 <script>
-let character="👧";
-let score=0,lives=3,playing=false;
-let player={x:75,y:205,vy:0};
-let objects=[];
-let frame=0;
-const canvas=document.getElementById("canvas");
+const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
+let w=0,h=0;
+function resize(){
+ const dpr=Math.min(devicePixelRatio||1,2);
+ w=canvas.clientWidth;h=canvas.clientHeight;
+ canvas.width=w*dpr;canvas.height=h*dpr;
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener("resize",resize);
+resize();
 
-function choose(c){
- character=c;
- document.getElementById("friends").textContent=c+" 👧 👦 🐶";
-}
-function startGame(){
- document.getElementById("home").style.display="none";
- document.getElementById("game").style.display="block";
- score=0;lives=3;frame=0;
- player={x:75,y:205,vy:0};
- objects=[];
- playing=true;
- updateText();
- requestAnimationFrame(loop);
-}
-function backHome(){
- playing=false;
- document.getElementById("game").style.display="none";
- document.getElementById("home").style.display="block";
-}
-function jump(){
- if(playing && player.y>=204) player.vy=-13;
-}
-function move(){
- if(playing) player.x=Math.min(180,player.x+25);
-}
-document.addEventListener("keydown",e=>{
- if(e.code==="Space"||e.code==="ArrowUp")jump();
- if(e.code==="ArrowRight")move();
-});
-function updateText(){
- document.getElementById("score").textContent=score;
- document.getElementById("lives").textContent=lives;
-}
-function loop(){
- if(!playing)return;
- frame++;
- ctx.clearRect(0,0,600,300);
- ctx.font="35px Arial";
- ctx.fillText("☀️",500,48);
- ctx.fillText("🏡",400,175);
- ctx.fillText("🌳",280,175);
- ctx.fillStyle="#54b844";
- ctx.fillRect(0,245,600,55);
- ctx.fillStyle="#b88950";
- ctx.fillRect(0,252,600,8);
+const player={x:0,y:0,size:18,speed:3};
+let coins=0,flowers=0;
+let keys={};
+let objects=[];
 
- if(frame%85===0){
- objects.push({
- x:610,
- y:Math.random()>0.5?210:238,
- type:Math.random()>0.55?"🪙":"🪨"
- });
+function resetObjects(){
+ objects=[
+ {x:.18,y:.22,type:"house"},
+ {x:.78,y:.22,type:"house"},
+ {x:.2,y:.76,type:"tree"},
+ {x:.78,y:.76,type:"tree"},
+ {x:.5,y:.18,type:"cow"},
+ {x:.5,y:.77,type:"flower"},
+ {x:.35,y:.48,type:"coin"},
+ {x:.7,y:.55,type:"coin"},
+ {x:.2,y:.53,type:"coin"},
+ {x:.5,y:.9,type:"coin"}
+ ];
+}
+resetObjects();
+player.x=w/2;player.y=h/2;
+
+function drawTree(x,y){
+ ctx.fillStyle="#80532d";ctx.fillRect(x-5,y,10,20);
+ ctx.fillStyle="#268b48";ctx.beginPath();ctx.arc(x,y,20,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#52b85c";ctx.beginPath();ctx.arc(x-7,y-7,10,0,Math.PI*2);ctx.fill();
+}
+function drawHouse(x,y){
+ ctx.fillStyle="#e7b77a";ctx.fillRect(x-24,y-10,48,35);
+ ctx.fillStyle="#b84c38";ctx.beginPath();ctx.moveTo(x-30,y-10);ctx.lineTo(x,y-38);ctx.lineTo(x+30,y-10);ctx.fill();
+ ctx.fillStyle="#69462e";ctx.fillRect(x-7,y+5,14,20);
+ ctx.fillStyle="#9bd8ed";ctx.fillRect(x-20,y-5,10,10);ctx.fillRect(x+10,y-5,10,10);
+}
+function draw(){
+ ctx.clearRect(0,0,w,h);
+ ctx.fillStyle="#8acb70";ctx.fillRect(0,0,w,h);
+ ctx.fillStyle="#d6c18a";
+ ctx.fillRect(w*.44,0,w*.12,h);
+ ctx.fillRect(0,h*.43,w,h*.13);
+ ctx.fillStyle="#b6e4ee";ctx.fillRect(w*.88,0,w*.12,h);
+ ctx.fillStyle="#9cceec";ctx.fillRect(w*.9,0,w*.08,h);
+ for(let i=0;i<12;i++){
+  drawTree((i*97+25)%w,(i*73+45)%h);
  }
  objects.forEach(o=>{
- o.x-=4;
- ctx.font="30px Arial";
- ctx.fillText(o.type,o.x,o.y);
- if(!o.hit && Math.abs(o.x-player.x)<32 &&
- Math.abs(o.y-player.y)<42){
- o.hit=true;
- if(o.type==="🪙"){
- score++;
- document.getElementById("message").textContent="⭐ Great! Coin collected!";
- }else if(player.y>205){
- lives--;
- document.getElementById("message").textContent="Oops! Avoid the rocks!";
- }
- updateText();
- }
+  let x=o.x*w,y=o.y*h;
+  if(o.type==="house")drawHouse(x,y);
+  if(o.type==="tree")drawTree(x,y);
+  if(o.type==="coin"){
+   ctx.fillStyle="#ffdb35";ctx.beginPath();ctx.arc(x,y,11,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle="#a46b00";ctx.font="bold 14px Arial";ctx.textAlign="center";ctx.fillText("$",x,y+5);
+  }
+  if(o.type==="cow"){
+   ctx.font="30px Arial";ctx.fillText("🐄",x,y);
+  }
+  if(o.type==="flower"){
+   ctx.font="30px Arial";ctx.fillText("🌻",x,y);
+  }
  });
- objects=objects.filter(o=>o.x>-40);
- player.vy+=0.65;
- player.y+=player.vy;
- if(player.y>205){player.y=205;player.vy=0;}
- ctx.font="42px Arial";
- ctx.fillText(character,player.x,player.y+35);
- if(lives<=0){
- playing=false;
- document.getElementById("message").textContent=
- "Game over! You collected "+score+" coins.";
- return;
- }
- requestAnimationFrame(loop);
+ ctx.font="32px Arial";ctx.textAlign="center";
+ ctx.fillText("🧑",player.x,player.y+10);
 }
-function showPuzzle(){
- if(!playing)return;
- const answer=prompt("🌈 Puzzle: What colour is the sky on a sunny day?\\nA. Blue\\nB. Green\\nC. Pink");
- if(answer && answer.trim().toLowerCase()==="a"){
- score+=5;
- updateText();
- alert("🎉 Correct! You earned 5 coins!");
- }else if(answer){
- alert("Try again! The answer is A. Blue.");
- }
+function move(){
+ let dx=0,dy=0;
+ if(keys.left)dx--;
+ if(keys.right)dx++;
+ if(keys.up)dy--;
+ if(keys.down)dy++;
+ if(dx&&dy){dx*=.707;dy*=.707;}
+ player.x=Math.max(15,Math.min(w-15,player.x+dx*player.speed));
+ player.y=Math.max(25,Math.min(h-15,player.y+dy*player.speed));
+ objects.forEach(o=>{
+  if(o.type!=="coin"&&o.type!=="flower")return;
+  let ox=o.x*w,oy=o.y*h;
+  if(Math.hypot(player.x-ox,player.y-oy)<27){
+   if(o.type==="coin"){
+    coins+=10;
+    document.getElementById("coins").textContent=coins;
+    objects.splice(objects.indexOf(o),1);
+    document.getElementById("message").textContent="Amazing! You found 10 coins! 🪙";
+   }else{
+    flowers++;
+    document.getElementById("flowers").textContent=flowers;
+    objects.splice(objects.indexOf(o),1);
+    document.getElementById("message").textContent="Beautiful flower collected! 🌻";
+   }
+  }
+ });
+ if(coins>=50)document.getElementById("level").textContent="2";
 }
+document.querySelectorAll("[data-dir]").forEach(btn=>{
+ const dir=btn.dataset.dir;
+ btn.addEventListener("pointerdown",e=>{e.preventDefault();keys[dir]=true;});
+ btn.addEventListener("pointerup",()=>keys[dir]=false);
+ btn.addEventListener("pointerleave",()=>keys[dir]=false);
+ btn.addEventListener("pointercancel",()=>keys[dir]=false);
+});
+window.addEventListener("keydown",e=>{
+ let k=e.key.toLowerCase();
+ if(k==="arrowup"||k==="w")keys.up=true;
+ if(k==="arrowdown"||k==="s")keys.down=true;
+ if(k==="arrowleft"||k==="a")keys.left=true;
+ if(k==="arrowright"||k==="d")keys.right=true;
+});
+window.addEventListener("keyup",e=>{
+ let k=e.key.toLowerCase();
+ if(k==="arrowup"||k==="w")keys.up=false;
+ if(k==="arrowdown"||k==="s")keys.down=false;
+ if(k==="arrowleft"||k==="a")keys.left=false;
+ if(k==="arrowright"||k==="d")keys.right=false;
+});
+function loop(){move();draw();requestAnimationFrame(loop);}
+loop();
 </script>
 </body>
 </html>
