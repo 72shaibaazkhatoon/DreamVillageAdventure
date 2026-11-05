@@ -1,268 +1,236 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dream Village Adventure 3D</title>
+<title>Dream Village Adventure</title>
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;
- overflow:hidden;
- font-family:Arial;
- background:#87ceeb;
-}
-#game{width:100vw;height:100vh;display:block}
-#hud{
- position:absolute;top:12px;left:12px;
- color:white;background:#173c28cc;
- padding:12px;border-radius:14px;
- font-weight:bold;line-height:1.8;
-}
-#controls{
- position:absolute;bottom:20px;left:0;right:0;
- display:flex;justify-content:space-between;
- padding:0 25px;pointer-events:none;
-}
-.pad{display:grid;grid-template-columns:55px 55px 55px;gap:5px}
-button{
- pointer-events:auto;border:0;border-radius:14px;
- background:#ffffffcc;color:#17472c;
- font-size:25px;font-weight:bold;
- width:55px;height:55px;
-}
-button:active{background:#8df2a0}
-#hint{
- position:absolute;bottom:95px;width:100%;
- text-align:center;color:white;
- font-weight:bold;text-shadow:1px 2px 3px #333;
-}
+body{margin:0;overflow:hidden;font-family:Arial,sans-serif;background:#87ceeb}
+#game{position:fixed;inset:0}
+#hud{position:fixed;top:12px;left:12px;z-index:5;color:white;background:#183d2dcc;padding:12px 16px;border-radius:14px;font-weight:bold}
+#help{font-size:12px;margin-top:5px}
+#controls{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:5;display:grid;grid-template-columns:58px 58px 58px;gap:7px}
+button{border:0;border-radius:14px;background:#ffffffdd;color:#17452b;font-size:24px;font-weight:bold;width:58px;height:55px;box-shadow:0 3px 8px #0004;touch-action:none}
+button:active{background:#ffe17b}
+#stop{font-size:14px;grid-column:2}
+#error{position:fixed;top:45%;left:10%;right:10%;z-index:10;background:white;padding:20px;border-radius:12px;display:none;color:#a00}
 </style>
 </head>
 <body>
+<div id="game"></div>
 <div id="hud">
-🏡 Dream Village 3D<br>
-🪙 Coins: <span id="coins">0</span><br>
-⭐ Level: <span id="level">1</span>
+🌳 DREAM VILLAGE
+<div>🪙 Coins: <span id="coins">0</span></div>
+<div id="help">Explore your beautiful village!</div>
 </div>
-<div id="hint">Explore your beautiful village!</div>
 <div id="controls">
- <div class="pad">
-  <span></span><button onclick="setMove('up')">⬆</button><span></span>
-  <button onclick="setMove('left')">⬅</button>
-  <button onclick="setMove('down')">⬇</button>
-  <button onclick="setMove('right')">➡</button>
- </div>
- <button onclick="setMove('stop')">⏹</button>
+<button id="up">⬆️</button>
+<button id="stop">STOP</button>
+<button id="left">⬅️</button>
+<button id="down">⬇️</button>
+<button id="right">➡️</button>
 </div>
+<div id="error"></div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+(function(){
+const errorBox=document.getElementById("error");
+if(!window.THREE){
+ errorBox.style.display="block";
+ errorBox.textContent="3D library could not load. Please refresh the game while connected to the internet.";
+ return;
+}
+
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x87ceeb);
-scene.fog=new THREE.Fog(0x87ceeb,25,90);
+scene.fog=new THREE.Fog(0x87ceeb,65,145);
 
-const camera=new THREE.PerspectiveCamera(
- 65,window.innerWidth/window.innerHeight,0.1,200
-);
+const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,250);
 const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled=true;
-document.body.appendChild(renderer.domElement);
-renderer.domElement.id="game";
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+document.getElementById("game").appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0xffffff,0x668855,2));
-const sun=new THREE.DirectionalLight(0xffffff,2);
-sun.position.set(-15,25,15);
+scene.add(new THREE.HemisphereLight(0xffffff,0x668044,1.5));
+const sun=new THREE.DirectionalLight(0xffffff,1.4);
+sun.position.set(-25,40,25);
 sun.castShadow=true;
 scene.add(sun);
 
-const material=(color)=>new THREE.MeshStandardMaterial({color});
-const grassMat=material(0x62b94f);
-const roadMat=material(0xd8bd86);
-const brownMat=material(0x80502d);
-const greenMat=material(0x278b43);
-
-function cube(w,h,d,x,y,z,mat){
- const mesh=new THREE.Mesh(
-  new THREE.BoxGeometry(w,h,d),mat
- );
- mesh.position.set(x,y,z);
- mesh.castShadow=true;
- mesh.receiveShadow=true;
- scene.add(mesh);
- return mesh;
+function material(color){return new THREE.MeshStandardMaterial({color:color});}
+function box(x,y,z,sx,sy,sz,color){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material(color));
+ m.position.set(x,y,z);
+ m.castShadow=true;m.receiveShadow=true;
+ scene.add(m);return m;
 }
-</script>
-</body>
-</html>
+function ground(){
+ const g=new THREE.Mesh(new THREE.PlaneGeometry(150,150),material(0x64b85c));
+ g.rotation.x=-Math.PI/2;g.position.y=-0.55;g.receiveShadow=true;scene.add(g);
+}
+ground();
 
-<script>
-// Create the village ground
-cube(200,1,200,0,-0.6,0,grassMat);
+// Roads
+box(0,-0.46,0,7,0.12,105,0xc9b58b);
+box(0,-0.44,0,105,0.12,7,0xc9b58b);
+box(0,-0.40,0,18,0.14,18,0xe5cf9b);
 
-// Village roads
-cube(12,0.08,180,0,0,0,roadMat);
-cube(180,0.08,12,0,0,0,roadMat);
-
-// Build colorful houses
-function makeHouse(x,z,color){
- cube(7,5,7,x,2.5,z,material(color));
- const roof=new THREE.Mesh(
-  new THREE.ConeGeometry(5.7,3.5,4),
-  material(0x9b382c)
- );
- roof.position.set(x,6.7,z);
- roof.rotation.y=Math.PI/4;
- roof.castShadow=true;
- scene.add(roof);
- cube(1.5,2.7,0.15,x,1.35,z+3.58,material(0x50301d));
- cube(1.4,1.3,0.15,x+2,3,z+3.62,material(0x9ee5ff));
+// Road markings
+for(let i=-45;i<=45;i+=10){
+ box(0,-0.31,i,0.18,0.04,4,0xffffff);
+ box(i,-0.30,0,4,0.04,0.18,0xffffff);
 }
 
-makeHouse(-19,-18,0xffd166);
-makeHouse(19,-18,0xff9f80);
-makeHouse(-19,19,0xb5a0ff);
-makeHouse(19,19,0xffd6e7);
+// Houses
+function house(x,z,color){
+ const group=new THREE.Group();
+ const walls=new THREE.Mesh(new THREE.BoxGeometry(7,5,6),material(color));
+ walls.position.y=2.0;walls.castShadow=true;group.add(walls);
+
+ const roof=new THREE.Mesh(new THREE.ConeGeometry(5.2,3.2,4),material(0x9c3f2f));
+ roof.position.y=6.0;roof.rotation.y=Math.PI/4;roof.castShadow=true;group.add(roof);
+
+ const door=new THREE.Mesh(new THREE.BoxGeometry(1.3,2.5,0.15),material(0x60351e));
+ door.position.set(0,1.25,3.08);group.add(door);
+
+ for(let wx of [-2.1,2.1]){
+  const w=new THREE.Mesh(new THREE.BoxGeometry(1.25,1.2,0.15),material(0x9de8ff));
+  w.position.set(wx,2.7,3.08);group.add(w);
+ }
+ group.position.set(x,-0.45,z);
+ scene.add(group);
+}
+house(-15,-16,0xffd27c);
+house(15,-16,0xff9d9d);
+house(-15,16,0xf5e6a8);
+house(15,16,0xb5d9ff);
+house(-32,-4,0xd9b3ff);
+house(32,5,0xffc2a1);
+house(-32,25,0xc4e9a0);
+house(32,-28,0xffe1a8);
 
 // Trees
-function makeTree(x,z){
- const trunk=new THREE.Mesh(
-  new THREE.CylinderGeometry(.45,.65,3,8),
-  brownMat
- );
- trunk.position.set(x,1.5,z);
- scene.add(trunk);
-
- const leaves=new THREE.Mesh(
-  new THREE.SphereGeometry(2.2,12,10),
-  greenMat
- );
- leaves.position.set(x,4,z);
- scene.add(leaves);
+function tree(x,z){
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.45,.6,3,8),material(0x754522));
+ trunk.position.set(x,1,z);trunk.castShadow=true;scene.add(trunk);
+ const leaves=new THREE.Mesh(new THREE.SphereGeometry(2.2,12,10),material(0x238b45));
+ leaves.position.set(x,3.7,z);leaves.castShadow=true;scene.add(leaves);
 }
-for(let i=0;i<35;i++){
- let x=(Math.random()-.5)*85;
- let z=(Math.random()-.5)*85;
- if(Math.abs(x)>27 || Math.abs(z)>27) makeTree(x,z);
+for(let i=0;i<42;i++){
+ const x=(Math.random()-.5)*105;
+ const z=(Math.random()-.5)*105;
+ if(Math.abs(x)<23&&Math.abs(z)<23)continue;
+ tree(x,z);
 }
 
-// Player character
-const player=new THREE.Group();
-const skin=material(0xffc18a);
-const shirt=material(0x2879e8);
-const pants=material(0x303d68);
-
-function part(w,h,d,x,y,z,mat){
- const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
- m.position.set(x,y,z);
- player.add(m);
- return m;
-}
-part(.8,1.1,.45,0,1.45,0,shirt);
-part(.5,.5,.5,0,2.3,0,skin);
-part(.18,.8,.22,-.25,.45,0,pants);
-part(.18,.8,.22,.25,.45,0,pants);
-part(.2,.8,.22,-.55,1.45,0,skin);
-part(.2,.8,.22,.55,1.45,0,skin);
-scene.add(player);
-player.position.set(0,0,0);
-
-// Coins
-const coinMat=new THREE.MeshStandardMaterial({
- color:0xffd700,metalness:.8,roughness:.2
-});
-const coins3d=[];
-for(let i=0;i<12;i++){
- const coin=new THREE.Mesh(
-  new THREE.TorusGeometry(.55,.16,10,20),
-  coinMat
- );
- coin.position.set(
-  (Math.random()-.5)*65,1,
-  (Math.random()-.5)*65
- );
- scene.add(coin);
- coins3d.push(coin);
-}
-
-// Movement
-let direction="stop";
-function setMove(d){direction=d;}
-window.addEventListener("keydown",e=>{
- if(e.key==="ArrowUp"||e.key==="w")direction="up";
- if(e.key==="ArrowDown"||e.key==="s")direction="down";
- if(e.key==="ArrowLeft"||e.key==="a")direction="left";
- if(e.key==="ArrowRight"||e.key==="d")direction="right";
-});
-window.addEventListener("keyup",()=>direction="stop");
-
-let totalCoins=0;
-function updateCoins(){
- for(let i=coins3d.length-1;i>=0;i--){
-  const coin=coins3d[i];
-  if(player.position.distanceTo(coin.position)<1.8){
-   scene.remove(coin);
-   coins3d.splice(i,1);
-   totalCoins++;
-   document.getElementById("coins").textContent=totalCoins;
-   document.getElementById("level").textContent=
-    Math.floor(totalCoins/5)+1;
-   document.getElementById("hint").textContent="✨ Coin collected!";
-  }
+// Farm
+box(-28,-0.35,0,15,.25,18,0x81502d);
+for(let i=0;i<5;i++){
+ const row=box(-34+i*3,-0.15,0,0.16,.15,16,0x4e9b36);
+ for(let j=-6;j<=6;j+=3){
+  const crop=new THREE.Mesh(new THREE.SphereGeometry(.55,8,8),material(0x8bd34a));
+  crop.position.set(-34+i*3,.6,j);scene.add(crop);
  }
 }
-</script>
-</body>
-</html>
 
-<script>
-// Camera follows the player
-camera.position.set(0,9,13);
-camera.lookAt(player.position);
+// Pond
+const pond=new THREE.Mesh(new THREE.CircleGeometry(7,32),material(0x39bde0));
+pond.rotation.x=-Math.PI/2;pond.position.set(28,-0.35,30);scene.add(pond);
+
+// Bridge
+box(28,0.2,30,4,.4,13,0x9a6334);
+for(let z=24;z<=36;z+=4){
+ box(25.7,1,z,.25,1.4,.25,0x754522);
+ box(30.3,1,z,.25,1.4,.25,0x754522);
+}
+
+// Player
+const player=new THREE.Group();
+const body=new THREE.Mesh(new THREE.BoxGeometry(1.2,1.8,.8),material(0x286be0));
+body.position.y=1.5;body.castShadow=true;player.add(body);
+const head=new THREE.Mesh(new THREE.SphereGeometry(.65,16,12),material(0xffc58a));
+head.position.y=2.8;head.castShadow=true;player.add(head);
+const legs=[];
+for(let x of [-.35,.35]){
+ const leg=new THREE.Mesh(new THREE.BoxGeometry(.35,.9,.4),material(0x26334d));
+ leg.position.set(x,.45,0);player.add(leg);legs.push(leg);
+}
+player.position.set(0,0,0);
+scene.add(player);
+
+// Coins
+const coins=[];
+for(let i=0;i<14;i++){
+ const coin=new THREE.Mesh(new THREE.TorusGeometry(.65,.18,8,16),material(0xffd21c));
+ coin.position.set((Math.random()-.5)*65,1.1,(Math.random()-.5)*65);
+ coin.castShadow=true;scene.add(coin);coins.push(coin);
+}
+
+let count=0;
+let dx=0,dz=0;
+function move(direction){
+ dx=direction[0];dz=direction[1];
+}
+function stop(){dx=0;dz=0;}
+
+const controls={
+ up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]
+};
+Object.keys(controls).forEach(id=>{
+ const btn=document.getElementById(id);
+ btn.addEventListener("pointerdown",e=>{e.preventDefault();move(controls[id]);});
+ btn.addEventListener("pointerup",stop);
+ btn.addEventListener("pointerleave",stop);
+ btn.addEventListener("pointercancel",stop);
+});
+document.getElementById("stop").addEventListener("click",stop);
+
+window.addEventListener("keydown",e=>{
+ if(e.key==="ArrowUp"||e.key==="w")move([0,-1]);
+ if(e.key==="ArrowDown"||e.key==="s")move([0,1]);
+ if(e.key==="ArrowLeft"||e.key==="a")move([-1,0]);
+ if(e.key==="ArrowRight"||e.key==="d")move([1,0]);
+});
+window.addEventListener("keyup",e=>{
+ if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","w","a","s","d"].includes(e.key))stop();
+});
 
 function animate(){
  requestAnimationFrame(animate);
+ player.position.x+=dx*.13;
+ player.position.z+=dz*.13;
+ player.position.x=Math.max(-48,Math.min(48,player.position.x));
+ player.position.z=Math.max(-48,Math.min(48,player.position.z));
 
- // Player movement
- const speed=0.13;
- if(direction==="up")player.position.z-=speed;
- if(direction==="down")player.position.z+=speed;
- if(direction==="left")player.position.x-=speed;
- if(direction==="right")player.position.x+=speed;
-
- player.position.x=Math.max(-85,Math.min(85,player.position.x));
- player.position.z=Math.max(-85,Math.min(85,player.position.z));
-
- // Rotate collected coins
- coins3d.forEach(coin=>{
-  coin.rotation.y+=0.04;
-  coin.rotation.x+=0.01;
+ coins.forEach((coin,index)=>{
+  coin.rotation.y+=.035;
+  coin.position.y=1.1+Math.sin(Date.now()*.003+index)*.15;
+  if(coin.visible&&coin.position.distanceTo(player.position)<1.8){
+   coin.visible=false;count++;
+   document.getElementById("coins").textContent=count;
+  }
  });
 
- // Camera follows character
- const targetCamera=new THREE.Vector3(
-  player.position.x,
-  player.position.y+8,
-  player.position.z+12
+ camera.position.lerp(
+  new THREE.Vector3(player.position.x,player.position.y+13,player.position.z+19),
+  .08
  );
- camera.position.lerp(targetCamera,0.08);
- camera.lookAt(
-  player.position.x,
-  player.position.y+1,
-  player.position.z
- );
-
- updateCoins();
+ camera.lookAt(player.position.x,player.position.y+1,player.position.z);
  renderer.render(scene,camera);
 }
+animate();
 
 window.addEventListener("resize",()=>{
- camera.aspect=window.innerWidth/window.innerHeight;
+ camera.aspect=innerWidth/innerHeight;
  camera.updateProjectionMatrix();
- renderer.setSize(window.innerWidth,window.innerHeight);
+ renderer.setSize(innerWidth,innerHeight);
 });
-
-animate();
+})();
 </script>
+</body>
+</html>
