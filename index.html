@@ -25,34 +25,34 @@ button{border:2px solid white;border-radius:14px;background:#ffffffbb;font-size:
 <body>
 
 <div id="hud">
-  <div id="title">🌈 DREAM VILLAGE V12</div>
-  <div id="score">🪙 Coins: 0 / 10</div>
-  <div id="message">Explore, meet animals and collect coins!</div>
+<div id="title">🌈 DREAM VILLAGE V12</div>
+<div id="score">🪙 Coins: 0 / 10</div>
+<div id="message">Explore, meet animals and collect coins!</div>
 </div>
 
 <canvas id="game"></canvas>
 
 <div id="controls">
-  <div class="pad">
-    <button class="up" data-key="up">⬆️</button>
-    <button class="left" data-key="left">⬅️</button>
-    <button class="down" data-key="down">⬇️</button>
-    <button class="right" data-key="right">➡️</button>
-  </div>
+<div class="pad">
+<button class="up" data-key="up">⬆️</button>
+<button class="left" data-key="left">⬅️</button>
+<button class="down" data-key="down">⬇️</button>
+<button class="right" data-key="right">➡️</button>
+</div>
 </div>
 
 <script>
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
-let W,H;
 
+let W,H;
 function resize(){
-  const dpr=window.devicePixelRatio||1;
-  canvas.width=innerWidth*dpr;
-  canvas.height=innerHeight*dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  W=innerWidth;
-  H=innerHeight;
+ const dpr=window.devicePixelRatio||1;
+ canvas.width=innerWidth*dpr;
+ canvas.height=innerHeight*dpr;
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+ W=innerWidth;
+ H=innerHeight;
 }
 addEventListener("resize",resize);
 resize();
@@ -61,554 +61,568 @@ resize();
 const keys={up:false,down:false,left:false,right:false};
 
 addEventListener("keydown",e=>{
-  const k=e.key.toLowerCase();
-  if(["arrowup","w"].includes(k)){keys.up=true;e.preventDefault()}
-  if(["arrowdown","s"].includes(k)){keys.down=true;e.preventDefault()}
-  if(["arrowleft","a"].includes(k)){keys.left=true;e.preventDefault()}
-  if(["arrowright","d"].includes(k)){keys.right=true;e.preventDefault()}
+ const k=e.key.toLowerCase();
+ if(k==="arrowup"||k==="w"){keys.up=true;e.preventDefault()}
+ if(k==="arrowdown"||k==="s"){keys.down=true;e.preventDefault()}
+ if(k==="arrowleft"||k==="a"){keys.left=true;e.preventDefault()}
+ if(k==="arrowright"||k==="d"){keys.right=true;e.preventDefault()}
 });
 
 addEventListener("keyup",e=>{
-  const k=e.key.toLowerCase();
-  if(["arrowup","w"].includes(k))keys.up=false;
-  if(["arrowdown","s"].includes(k))keys.down=false;
-  if(["arrowleft","a"].includes(k))keys.left=false;
-  if(["arrowright","d"].includes(k))keys.right=false;
+ const k=e.key.toLowerCase();
+ if(k==="arrowup"||k==="w")keys.up=false;
+ if(k==="arrowdown"||k==="s")keys.down=false;
+ if(k==="arrowleft"||k==="a")keys.left=false;
+ if(k==="arrowright"||k==="d")keys.right=false;
 });
 
 addEventListener("blur",()=>{
-  Object.keys(keys).forEach(k=>keys[k]=false);
+ Object.keys(keys).forEach(k=>keys[k]=false);
 });
 
 document.querySelectorAll("button[data-key]").forEach(b=>{
-  const k=b.dataset.key;
-  b.addEventListener("pointerdown",e=>{
-    e.preventDefault();
-    keys[k]=true;
-    b.setPointerCapture(e.pointerId);
-  });
-  ["pointerup","pointerleave","pointercancel","lostpointercapture"].forEach(ev=>{
-    b.addEventListener(ev,()=>keys[k]=false);
-  });
+ const k=b.dataset.key;
+
+ b.addEventListener("pointerdown",e=>{
+  e.preventDefault();
+  keys[k]=true;
+  b.setPointerCapture(e.pointerId);
+ });
+
+ ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>{
+  b.addEventListener(ev,()=>keys[k]=false);
+ });
 });
 
-// PLAYER AND GAME DATA
+// PLAYER AND CAMERA
 const player={x:0,y:0};
+const camera={x:0,y:0};
+
 let coins=0;
 let frame=0;
 let rewardShown=false;
+let walkPhase=0;
+let facing=1;
 
 const coinPlaces=[];
 for(let i=0;i<24;i++){
-  const a=i*2.4;
-  const r=100+(i%5)*75;
-  coinPlaces.push({
-    x:Math.cos(a)*r,
-    y:Math.sin(a)*r,
-    got:false
-  });
+ const a=i*2.4;
+ const r=100+(i%5)*75;
+ coinPlaces.push({
+  x:Math.cos(a)*r,
+  y:Math.sin(a)*r,
+  got:false
+ });
 }
 
 const houses=[
-  [-220,-180,"#ff8b70"],
-  [220,-180,"#ffd65c"],
-  [-220,180,"#a78bfa"],
-  [220,180,"#ff9cc9"],
-  [-430,-30,"#74c8f5"],
-  [430,30,"#78d89a"],
-  [-30,-420,"#ffad62"],
-  [30,420,"#e69cf5"]
+ [-220,-180,"#ff8b70"],
+ [220,-180,"#ffd65c"],
+ [-220,180,"#a78bfa"],
+ [220,180,"#ff9cc9"],
+ [-430,-30,"#74c8f5"],
+ [430,30,"#78d89a"],
+ [-30,-420,"#ffad62"],
+ [30,420,"#e69cf5"]
 ];
 
 const trees=[];
 for(let i=0;i<45;i++){
-  const a=i*2.4;
-  const r=330+(i%4)*55;
-  trees.push({
-    x:Math.cos(a)*r,
-    y:Math.sin(a)*r
-  });
+ const a=i*2.4;
+ const r=330+(i%4)*55;
+ trees.push({
+  x:Math.cos(a)*r,
+  y:Math.sin(a)*r
+ });
 }
 
 const animals=[];
 for(let i=0;i<8;i++){
-  animals.push({
-    x:Math.sin(i*5)*340,
-    y:Math.cos(i*4)*330,
-    direction:i%2?1:-1,
-    type:i%2?"🐶":"🐱",
-    speed:.5+(i%3)*.2
-  });
+ animals.push({
+  x:Math.sin(i*5)*340,
+  y:Math.cos(i*4)*330,
+  direction:i%2?1:-1,
+  type:i%2?"🐶":"🐱",
+  speed:.5+(i%3)*.2
+ });
 }
 
 // DRAWING HELPERS
 function rounded(x,y,w,h,r,color){
-  ctx.fillStyle=color;
-  ctx.beginPath();
-  ctx.roundRect(x,y,w,h,r);
-  ctx.fill();
+ ctx.fillStyle=color;
+ ctx.beginPath();
+ ctx.roundRect(x,y,w,h,r);
+ ctx.fill();
 }
 
 function drawHouse(x,y,c){
-  rounded(x-39,y-27,78,57,8,c);
-  ctx.fillStyle="#93482e";
-  ctx.beginPath();
-  ctx.moveTo(x-48,y-25);
-  ctx.lineTo(x,y-65);
-  ctx.lineTo(x+48,y-25);
-  ctx.closePath();
-  ctx.fill();
-  rounded(x-10,y+2,20,28,4,"#79432e");
-  rounded(x-29,y-15,17,16,3,"#c9f4ff");
-  rounded(x+12,y-15,17,16,3,"#c9f4ff");
+ rounded(x-39,y-27,78,57,8,c);
+
+ ctx.fillStyle="#93482e";
+ ctx.beginPath();
+ ctx.moveTo(x-48,y-25);
+ ctx.lineTo(x,y-65);
+ ctx.lineTo(x+48,y-25);
+ ctx.closePath();
+ ctx.fill();
+
+ rounded(x-10,y+2,20,28,4,"#79432e");
+ rounded(x-29,y-15,17,16,3,"#c9f4ff");
+ rounded(x+12,y-15,17,16,3,"#c9f4ff");
 }
 
 function drawTree(x,y){
-  ctx.fillStyle="#81502d";
-  ctx.fillRect(x-6,y,12,25);
+ ctx.fillStyle="#81502d";
+ ctx.fillRect(x-6,y,12,25);
 
-  ctx.fillStyle="#238c43";
-  ctx.beginPath();
-  ctx.arc(x,y-7,25,0,Math.PI*2);
-  ctx.fill();
+ ctx.fillStyle="#238c43";
+ ctx.beginPath();
+ ctx.arc(x,y-7,25,0,Math.PI*2);
+ ctx.fill();
 
-  ctx.fillStyle="#42b957";
-  ctx.beginPath();
-  ctx.arc(x-10,y-16,13,0,Math.PI*2);
-  ctx.fill();
+ ctx.fillStyle="#42b957";
+ ctx.beginPath();
+ ctx.arc(x-10,y-16,13,0,Math.PI*2);
+ ctx.fill();
 }
 
 function drawShop(){
-  rounded(-65,-345,130,90,10,"#f7d18a");
+ rounded(-65,-345,130,90,10,"#f7d18a");
 
-  ctx.fillStyle="#a54e38";
-  ctx.beginPath();
-  ctx.moveTo(-75,-345);
-  ctx.lineTo(0,-395);
-  ctx.lineTo(75,-345);
-  ctx.closePath();
-  ctx.fill();
+ ctx.fillStyle="#a54e38";
+ ctx.beginPath();
+ ctx.moveTo(-75,-345);
+ ctx.lineTo(0,-395);
+ ctx.lineTo(75,-345);
+ ctx.closePath();
+ ctx.fill();
 
-  rounded(-57,-342,114,19,4,"#ff6381");
+ rounded(-57,-342,114,19,4,"#ff6381");
 
-  for(let i=0;i<5;i++){
-    ctx.fillStyle=i%2?"#fff4cf":"#ff6381";
-    ctx.fillRect(-57+i*23,-342,23,19);
-  }
+ for(let i=0;i<5;i++){
+  ctx.fillStyle=i%2?"#fff4cf":"#ff6381";
+  ctx.fillRect(-57+i*23,-342,23,19);
+ }
 
-  rounded(-20,-315,40,60,4,"#75442e");
-  rounded(-54,-321,25,24,3,"#b9edff");
-  rounded(29,-321,25,24,3,"#b9edff");
+ rounded(-20,-315,40,60,4,"#75442e");
+ rounded(-54,-321,25,24,3,"#b9edff");
+ rounded(29,-321,25,24,3,"#b9edff");
 
-  ctx.fillStyle="#fff";
-  ctx.font="bold 17px Arial";
-  ctx.textAlign="center";
-  ctx.fillText("VILLAGE SHOP",0,-370);
+ ctx.fillStyle="#fff";
+ ctx.font="bold 17px Arial";
+ ctx.textAlign="center";
+ ctx.fillText("VILLAGE SHOP",0,-370);
 }
 
 function drawAnimal(a){
-  ctx.font="30px Arial";
-  ctx.textAlign="center";
-  ctx.fillText(a.type,a.x,a.y+Math.sin(frame*.1+a.x)*3);
+ ctx.font="30px Arial";
+ ctx.textAlign="center";
+ ctx.fillText(a.type,a.x,a.y+Math.sin(frame*.1+a.x)*3);
 }
 
-// V12 IMPROVED WALKING CHARACTER
+// IMPROVED CHARACTER WALKING
 function drawPlayer(){
 
-  const walking=keys.up||keys.down||keys.left||keys.right;
+ const walking=keys.up||keys.down||keys.left||keys.right;
 
-  // Walking cycle: opposite legs move in alternating steps.
-  const phase=frame*.30;
-  const step=walking?Math.sin(phase):0;
+ const step=walking?Math.sin(walkPhase):0;
+ const opposite=walking?Math.sin(walkPhase+Math.PI):0;
 
-  const leftLift=walking?Math.max(0,Math.cos(phase))*7:0;
-  const rightLift=walking?Math.max(0,-Math.cos(phase))*7:0;
+ const leftLift=walking?Math.max(0,Math.cos(walkPhase))*7:0;
+ const rightLift=walking?Math.max(0,-Math.cos(walkPhase))*7:0;
 
-  const bob=walking
-    ?Math.abs(Math.sin(phase*2))*2.3
-    :Math.sin(frame*.035)*0.7;
+ const bob=walking?Math.abs(Math.sin(walkPhase*2))*2.2:0;
 
-  const bodyTilt=walking?Math.sin(phase)*0.025:0;
+ ctx.save();
+ ctx.translate(player.x,player.y-bob);
 
-  // Ground shadow
-  ctx.fillStyle="#287b32";
-  ctx.beginPath();
-  ctx.ellipse(0,20,walking?19+Math.abs(step)*2:19,6,0,0,Math.PI*2);
-  ctx.fill();
+ // Ground shadow
+ ctx.fillStyle="#287b32";
+ ctx.beginPath();
+ ctx.ellipse(0,20,19+Math.abs(step)*2,6,0,0,Math.PI*2);
+ ctx.fill();
 
-  ctx.save();
-  ctx.translate(0,-bob);
-  ctx.rotate(bodyTilt);
+ // Backpack
+ rounded(-16,-13,32,25,8,"#8e55d9");
+ rounded(-14,-11,28,19,6,"#c28bff");
+ rounded(-11,-5,22,11,4,"#ffca55");
 
-  // Backpack
-  rounded(-16,-13,32,25,8,"#8e55d9");
-  rounded(-14,-11,28,19,6,"#c28bff");
-  rounded(-11,-5,22,11,4,"#ffca55");
+ ctx.strokeStyle="#713ca9";
+ ctx.lineWidth=3;
+ ctx.beginPath();
+ ctx.moveTo(-11,-10);
+ ctx.quadraticCurveTo(-16,1,-12,7);
+ ctx.moveTo(11,-10);
+ ctx.quadraticCurveTo(16,1,12,7);
+ ctx.stroke();
 
-  ctx.strokeStyle="#713ca9";
-  ctx.lineWidth=3;
+ // LEGS: alternating steps with bent knees
+ function leg(side,movement,lift){
+  const hipX=side*6;
+  const kneeX=hipX+movement*5;
+  const kneeY=17-lift*.4;
+  const footX=hipX+movement*10;
+  const footY=28-lift;
+
+  ctx.strokeStyle="#394d87";
+  ctx.lineWidth=8;
   ctx.lineCap="round";
+  ctx.lineJoin="round";
+
   ctx.beginPath();
-  ctx.moveTo(-11,-10);
-  ctx.quadraticCurveTo(-16,1,-12,7);
-  ctx.moveTo(11,-10);
-  ctx.quadraticCurveTo(16,1,12,7);
+  ctx.moveTo(hipX,8);
+  ctx.lineTo(kneeX,kneeY);
+  ctx.lineTo(footX,footY);
   ctx.stroke();
 
-  ctx.fillStyle="#fff3a5";
-  ctx.beginPath();
-  ctx.arc(0,-3,3,0,Math.PI*2);
-  ctx.fill();
-
-  // ARMS: opposite to the legs, with bent elbows.
-  function drawArm(side,amount){
-    const shoulderX=side*12;
-    const elbowX=shoulderX+amount*.55;
-    const handX=shoulderX+amount;
-    const elbowY=-1+Math.abs(amount)*.10;
-    const handY=5+Math.abs(amount)*.08;
-
-    ctx.strokeStyle="#ffc28f";
-    ctx.lineWidth=7;
-    ctx.lineCap="round";
-    ctx.lineJoin="round";
-
-    ctx.beginPath();
-    ctx.moveTo(shoulderX,-8);
-    ctx.lineTo(elbowX,elbowY);
-    ctx.lineTo(handX,handY);
-    ctx.stroke();
-
-    ctx.fillStyle="#ffd0a4";
-    ctx.beginPath();
-    ctx.arc(handX,handY,4,0,Math.PI*2);
-    ctx.fill();
-  }
-
-  drawArm(-1,walking?-step*10:0);
-  drawArm(1,walking?step*10:0);
-
-  // LEGS: bent knees and alternating lifted feet.
-  function drawLeg(side,amount,lift){
-    const hipX=side*6;
-    const kneeX=hipX+amount*5;
-    const kneeY=17-lift*.40;
-    const footX=hipX+amount*10;
-    const footY=28-lift;
-
-    ctx.strokeStyle="#394d87";
-    ctx.lineWidth=8;
-    ctx.lineCap="round";
-    ctx.lineJoin="round";
-
-    ctx.beginPath();
-    ctx.moveTo(hipX,8);
-    ctx.lineTo(kneeX,kneeY);
-    ctx.lineTo(footX,footY);
-    ctx.stroke();
-
-    // Bright pink shoes
-    ctx.save();
-    ctx.translate(footX,footY+2);
-    ctx.rotate(amount*.12);
-
-    ctx.fillStyle="#ff5795";
-    ctx.beginPath();
-    ctx.ellipse(0,0,8,4.5,0,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle="#fff";
-    ctx.fillRect(-4,-2,5,2);
-    ctx.restore();
-  }
-
-  drawLeg(-1,walking?step:0,leftLift);
-  drawLeg(1,walking?-step:0,rightLift);
-
-  // Body outline
-  rounded(-14,-13,28,28,9,"#a54bc7");
-
-  // Rainbow dress
-  rounded(-12,-12,24,25,7,"#ff71a7");
-
   ctx.save();
-  ctx.beginPath();
-  ctx.roundRect(-12,-12,24,25,7);
-  ctx.clip();
+  ctx.translate(footX,footY+2);
+  ctx.rotate(movement*.12);
 
-  const colours=[
-    "#ffcf52",
-    "#ff83a9",
-    "#9c7bff",
-    "#57cfff",
-    "#69df9b"
-  ];
-
-  for(let i=0;i<5;i++){
-    ctx.fillStyle=colours[i];
-    ctx.fillRect(-13,-12+i*5,26,5);
-  }
-  ctx.restore();
-
-  // Collar
-  ctx.fillStyle="#fff5d5";
-  ctx.beginPath();
-  ctx.moveTo(-6,-12);
-  ctx.lineTo(0,-5);
-  ctx.lineTo(6,-12);
-  ctx.fill();
-
-  // Neck
-  ctx.fillStyle="#ffc28f";
-  ctx.fillRect(-4,-20,8,8);
-
-  // Face
-  ctx.fillStyle="#ffc28f";
-  ctx.beginPath();
-  ctx.arc(0,-29,16,0,Math.PI*2);
-  ctx.fill();
-
-  // Ears
-  ctx.beginPath();
-  ctx.arc(-15,-29,4,0,Math.PI*2);
-  ctx.arc(15,-29,4,0,Math.PI*2);
-  ctx.fill();
-
-  // Hair behind head
-  ctx.fillStyle="#60351f";
-  ctx.beginPath();
-  ctx.arc(-12,-28,7,0,Math.PI*2);
-  ctx.arc(12,-28,7,0,Math.PI*2);
-  ctx.fill();
-
-  // Main hair
-  ctx.beginPath();
-  ctx.arc(0,-35,16,Math.PI,Math.PI*2);
-  ctx.fill();
-
-  // Fringe
-  ctx.beginPath();
-  ctx.arc(-7,-36,7,0,Math.PI*2);
-  ctx.arc(3,-38,7,0,Math.PI*2);
-  ctx.fill();
-
-  // Pink bow
   ctx.fillStyle="#ff5795";
   ctx.beginPath();
-  ctx.moveTo(10,-43);
-  ctx.lineTo(17,-48);
-  ctx.lineTo(17,-39);
-  ctx.closePath();
+  ctx.ellipse(0,0,8,4.5,0,0,Math.PI*2);
   ctx.fill();
 
-  ctx.beginPath();
-  ctx.moveTo(10,-43);
-  ctx.lineTo(3,-48);
-  ctx.lineTo(3,-39);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle="#ffe36d";
-  ctx.beginPath();
-  ctx.arc(10,-43,3,0,Math.PI*2);
-  ctx.fill();
-
-  // Eyes
   ctx.fillStyle="#fff";
-  ctx.beginPath();
-  ctx.ellipse(-6,-29,4,5,0,0,Math.PI*2);
-  ctx.ellipse(6,-29,4,5,0,0,Math.PI*2);
-  ctx.fill();
+  ctx.fillRect(-4,-2,5,2);
+  ctx.restore();
+ }
 
-  ctx.fillStyle="#3b2b37";
-  ctx.beginPath();
-  ctx.arc(-6,-28,2.3,0,Math.PI*2);
-  ctx.arc(6,-28,2.3,0,Math.PI*2);
-  ctx.fill();
+ leg(-1,step,leftLift);
+ leg(1,opposite,rightLift);
 
-  // Eye highlights
-  ctx.fillStyle="#fff";
-  ctx.beginPath();
-  ctx.arc(-7,-30,1,0,Math.PI*2);
-  ctx.arc(5,-30,1,0,Math.PI*2);
-  ctx.fill();
+ // ARMS: swing opposite to the legs
+ function arm(side,movement){
+  const shoulderX=side*12;
+  const elbowX=shoulderX+movement*.55;
+  const handX=shoulderX+movement;
+  const elbowY=-1;
+  const handY=5;
 
-  // Cheeks
-  ctx.fillStyle="#ff929e";
-  ctx.beginPath();
-  ctx.ellipse(-11,-22,3,2,0,0,Math.PI*2);
-  ctx.ellipse(11,-22,3,2,0,0,Math.PI*2);
-  ctx.fill();
+  ctx.strokeStyle="#ffc28f";
+  ctx.lineWidth=7;
+  ctx.lineCap="round";
+  ctx.lineJoin="round";
 
-  // Smile
-  ctx.strokeStyle="#9a4245";
-  ctx.lineWidth=2;
   ctx.beginPath();
-  ctx.arc(0,-23,5,.15,Math.PI-.15);
+  ctx.moveTo(shoulderX,-8);
+  ctx.lineTo(elbowX,elbowY);
+  ctx.lineTo(handX,handY);
   ctx.stroke();
 
-  ctx.restore();
+  ctx.fillStyle="#ffd0a4";
+  ctx.beginPath();
+  ctx.arc(handX,handY,4,0,Math.PI*2);
+  ctx.fill();
+ }
+
+ arm(-1,walking?-step*9:0);
+ arm(1,walking?step*9:0);
+
+ // Body
+ rounded(-14,-13,28,28,9,"#a54bc7");
+ rounded(-12,-12,24,25,7,"#ff71a7");
+
+ // Rainbow dress
+ ctx.save();
+ ctx.beginPath();
+ ctx.roundRect(-12,-12,24,25,7);
+ ctx.clip();
+
+ const colours=["#ffcf52","#ff83a9","#9c7bff","#57cfff","#69df9b"];
+
+ for(let i=0;i<5;i++){
+  ctx.fillStyle=colours[i];
+  ctx.fillRect(-13,-12+i*5,26,5);
+ }
+ ctx.restore();
+
+ // Collar
+ ctx.fillStyle="#fff5d5";
+ ctx.beginPath();
+ ctx.moveTo(-6,-12);
+ ctx.lineTo(0,-5);
+ ctx.lineTo(6,-12);
+ ctx.fill();
+
+ // Neck
+ ctx.fillStyle="#ffc28f";
+ ctx.fillRect(-4,-20,8,8);
+
+ // Face
+ ctx.fillStyle="#ffc28f";
+ ctx.beginPath();
+ ctx.arc(0,-29,16,0,Math.PI*2);
+ ctx.fill();
+
+ // Ears
+ ctx.beginPath();
+ ctx.arc(-15,-29,4,0,Math.PI*2);
+ ctx.arc(15,-29,4,0,Math.PI*2);
+ ctx.fill();
+
+ // Hair
+ ctx.fillStyle="#60351f";
+ ctx.beginPath();
+ ctx.arc(-12,-28,7,0,Math.PI*2);
+ ctx.arc(12,-28,7,0,Math.PI*2);
+ ctx.arc(0,-35,16,Math.PI,Math.PI*2);
+ ctx.fill();
+
+ // Fringe
+ ctx.beginPath();
+ ctx.arc(-7,-36,7,0,Math.PI*2);
+ ctx.arc(3,-38,7,0,Math.PI*2);
+ ctx.fill();
+
+ // Pink bow
+ ctx.fillStyle="#ff5795";
+ ctx.beginPath();
+ ctx.moveTo(10,-43);
+ ctx.lineTo(17,-48);
+ ctx.lineTo(17,-39);
+ ctx.closePath();
+ ctx.fill();
+
+ ctx.beginPath();
+ ctx.moveTo(10,-43);
+ ctx.lineTo(3,-48);
+ ctx.lineTo(3,-39);
+ ctx.closePath();
+ ctx.fill();
+
+ ctx.fillStyle="#ffe36d";
+ ctx.beginPath();
+ ctx.arc(10,-43,3,0,Math.PI*2);
+ ctx.fill();
+
+ // Eyes
+ ctx.fillStyle="#fff";
+ ctx.beginPath();
+ ctx.ellipse(-6,-29,4,5,0,0,Math.PI*2);
+ ctx.ellipse(6,-29,4,5,0,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="#3b2b37";
+ ctx.beginPath();
+ ctx.arc(-6,-28,2.3,0,Math.PI*2);
+ ctx.arc(6,-28,2.3,0,Math.PI*2);
+ ctx.fill();
+
+ // Eye highlights
+ ctx.fillStyle="#fff";
+ ctx.beginPath();
+ ctx.arc(-7,-30,1,0,Math.PI*2);
+ ctx.arc(5,-30,1,0,Math.PI*2);
+ ctx.fill();
+
+ // Cheeks
+ ctx.fillStyle="#ff929e";
+ ctx.beginPath();
+ ctx.ellipse(-11,-22,3,2,0,0,Math.PI*2);
+ ctx.ellipse(11,-22,3,2,0,0,Math.PI*2);
+ ctx.fill();
+
+ // Smile
+ ctx.strokeStyle="#9a4245";
+ ctx.lineWidth=2;
+ ctx.beginPath();
+ ctx.arc(0,-23,5,.15,Math.PI-.15);
+ ctx.stroke();
+
+ ctx.restore();
+}
+
+// CAMERA: PLAYER MOVES ON SCREEN FIRST
+// Camera follows only when player reaches the screen boundary zone.
+function updateCamera(){
+
+ const minX=W*.32;
+ const maxX=W*.68;
+ const minY=H*.30;
+ const maxY=H*.68;
+
+ const screenX=W/2+player.x-camera.x;
+ const screenY=H/2+player.y-camera.y;
+
+ let targetX=camera.x;
+ let targetY=camera.y;
+
+ if(screenX<minX){
+  targetX=W/2+player.x-minX;
+ }
+ if(screenX>maxX){
+  targetX=W/2+player.x-maxX;
+ }
+ if(screenY<minY){
+  targetY=H/2+player.y-minY;
+ }
+ if(screenY>maxY){
+  targetY=H/2+player.y-maxY;
+ }
+
+ camera.x+=(targetX-camera.x)*.18;
+ camera.y+=(targetY-camera.y)*.18;
 }
 
 // VILLAGE WORLD
 function draw(){
 
-  frame++;
+ frame++;
 
-  ctx.fillStyle="#63c94d";
-  ctx.fillRect(0,0,W,H);
+ ctx.fillStyle="#63c94d";
+ ctx.fillRect(0,0,W,H);
 
-  ctx.save();
-  ctx.translate(W/2-player.x,H/2-player.y);
+ // Camera controls the world view
+ ctx.save();
+ ctx.translate(W/2-camera.x,H/2-camera.y);
 
-  // Roads
-  ctx.fillStyle="#d6b887";
-  ctx.fillRect(-1000,-48,2000,96);
-  ctx.fillRect(-48,-1000,96,2000);
+ // Roads
+ ctx.fillStyle="#d6b887";
+ ctx.fillRect(-1000,-48,2000,96);
+ ctx.fillRect(-48,-1000,96,2000);
 
-  ctx.fillStyle="#f1d9aa";
-  ctx.fillRect(-1000,-4,2000,8);
-  ctx.fillRect(-4,-1000,8,2000);
+ ctx.fillStyle="#f1d9aa";
+ ctx.fillRect(-1000,-4,2000,8);
+ ctx.fillRect(-4,-1000,8,2000);
 
-  houses.forEach(h=>drawHouse(h[0],h[1],h[2]));
-  trees.forEach(t=>drawTree(t.x,t.y));
+ houses.forEach(h=>drawHouse(h[0],h[1],h[2]));
+ trees.forEach(t=>drawTree(t.x,t.y));
 
-  drawShop();
+ drawShop();
 
-  // Gardens and flowers
-  for(let i=0;i<85;i++){
-    const x=Math.sin(i*19)*530;
-    const y=Math.cos(i*13)*530;
+ // Flowers
+ for(let i=0;i<85;i++){
+  const x=Math.sin(i*19)*530;
+  const y=Math.cos(i*13)*530;
 
-    ctx.fillStyle=[
-      "#ffec62",
-      "#ff80b5",
-      "#ffffff",
-      "#b98cff"
-    ][i%4];
-
-    ctx.beginPath();
-    ctx.arc(x,y,4,0,Math.PI*2);
-    ctx.fill();
-
-    if(i%4===0){
-      ctx.fillStyle="#238b40";
-      ctx.fillRect(x-2,y+4,4,9);
-    }
-  }
-
-  // Pond
-  ctx.fillStyle="#258fdf";
+  ctx.fillStyle=["#ffec62","#ff80b5","#ffffff","#b98cff"][i%4];
   ctx.beginPath();
-  ctx.ellipse(310,280,65,42,0,0,Math.PI*2);
+  ctx.arc(x,y,4,0,Math.PI*2);
   ctx.fill();
 
-  ctx.fillStyle="#8ce7ff";
+  if(i%4===0){
+   ctx.fillStyle="#238b40";
+   ctx.fillRect(x-2,y+4,4,9);
+  }
+ }
+
+ // Pond
+ ctx.fillStyle="#258fdf";
+ ctx.beginPath();
+ ctx.ellipse(310,280,65,42,0,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="#8ce7ff";
+ ctx.beginPath();
+ ctx.ellipse(300,270,24,8,0,0,Math.PI*2);
+ ctx.fill();
+
+ // Benches
+ for(const [x,y] of [
+  [-130,100],[130,-100],[-150,-110],[150,110]
+ ]){
+  rounded(x-22,y-7,44,14,3,"#87502f");
+  ctx.fillStyle="#444";
+  ctx.fillRect(x-17,y+7,5,12);
+  ctx.fillRect(x+12,y+7,5,12);
+ }
+
+ // Animals
+ animals.forEach(a=>{
+  drawAnimal(a);
+  a.x+=a.direction*a.speed;
+  if(a.x>470||a.x< -470)a.direction*=-1;
+ });
+
+ // Coins
+ coinPlaces.forEach(c=>{
+  if(c.got)return;
+
+  const coinBob=Math.sin(frame*.08+c.x)*4;
+
+  ctx.fillStyle="#ffbd00";
   ctx.beginPath();
-  ctx.ellipse(300,270,24,8,0,0,Math.PI*2);
+  ctx.arc(c.x,c.y+coinBob,12,0,Math.PI*2);
   ctx.fill();
 
-  // Benches
-  for(const [x,y] of [
-    [-130,100],
-    [130,-100],
-    [-150,-110],
-    [150,110]
-  ]){
-    rounded(x-22,y-7,44,14,3,"#87502f");
-    ctx.fillStyle="#444";
-    ctx.fillRect(x-17,y+7,5,12);
-    ctx.fillRect(x+12,y+7,5,12);
+  ctx.strokeStyle="#fff18a";
+  ctx.lineWidth=3;
+  ctx.stroke();
+
+  ctx.fillStyle="#9a6500";
+  ctx.font="bold 14px Arial";
+  ctx.textAlign="center";
+  ctx.fillText("$",c.x,c.y+coinBob+5);
+ });
+
+ // Character is drawn at actual world position
+ drawPlayer();
+
+ ctx.restore();
+
+ // Collect coins
+ coinPlaces.forEach(c=>{
+  if(!c.got&&Math.hypot(c.x-player.x,c.y-player.y)<27){
+   c.got=true;
+   coins++;
+
+   document.getElementById("score").textContent=
+    "🪙 Coins: "+coins+" / 10";
+
+   document.getElementById("message").textContent=
+    coins>=10
+    ?"🎉 You won the village treasure reward!"
+    :"✨ Wonderful! Coin collected!";
+
+   if(coins>=10&&!rewardShown){
+    rewardShown=true;
+    setTimeout(()=>{
+     alert(
+      "🏆 CONGRATULATIONS! 🏆\n"+
+      "You collected 10 coins!\n"+
+      "You are the Dream Village Champion!"
+     );
+    },100);
+   }
   }
-
-  // Animals
-  animals.forEach(a=>{
-    drawAnimal(a);
-    a.x+=a.direction*a.speed;
-    if(a.x>470||a.x< -470)a.direction*=-1;
-  });
-
-  // Coins
-  coinPlaces.forEach(c=>{
-    if(c.got)return;
-
-    const coinBob=Math.sin(frame*.08+c.x)*4;
-
-    ctx.fillStyle="#ffbd00";
-    ctx.beginPath();
-    ctx.arc(c.x,c.y+coinBob,12,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.strokeStyle="#fff18a";
-    ctx.lineWidth=3;
-    ctx.stroke();
-
-    ctx.fillStyle="#9a6500";
-    ctx.font="bold 14px Arial";
-    ctx.textAlign="center";
-    ctx.fillText("$",c.x,c.y+coinBob+5);
-  });
-
-  // Character remains at the centre as in V11
-  drawPlayer();
-
-  ctx.restore();
-
-  // Coin collection
-  coinPlaces.forEach(c=>{
-    if(!c.got&&Math.hypot(
-      c.x-player.x,
-      c.y-player.y
-    )<27){
-
-      c.got=true;
-      coins++;
-
-      document.getElementById("score").textContent=
-        "🪙 Coins: "+coins+" / 10";
-
-      document.getElementById("message").textContent=
-        coins>=10
-        ?"🎉 You won the village treasure reward!"
-        :"✨ Wonderful! Coin collected!";
-
-      if(coins>=10&&!rewardShown){
-        rewardShown=true;
-        setTimeout(()=>{
-          alert(
-            "🏆 CONGRATULATIONS! 🏆\n"+
-            "You collected 10 coins!\n"+
-            "You are the Dream Village Champion!"
-          );
-        },100);
-      }
-    }
-  });
+ });
 }
 
-// PLAYER MOVEMENT
+// MOVEMENT
 function update(){
 
-  if(keys.up||keys.down||keys.left||keys.right){
+ let dx=0;
+ let dy=0;
 
-    let dx=0,dy=0;
+ if(keys.up)dy-=1;
+ if(keys.down)dy+=1;
+ if(keys.left)dx-=1;
+ if(keys.right)dx+=1;
 
-    if(keys.up)dy-=1;
-    if(keys.down)dy+=1;
-    if(keys.left)dx-=1;
-    if(keys.right)dx+=1;
+ const moving=dx!==0||dy!==0;
 
-    const n=Math.hypot(dx,dy)||1;
+ if(moving){
+  const length=Math.hypot(dx,dy);
+  dx/=length;
+  dy/=length;
 
-    player.x+=dx/n*3;
-    player.y+=dy/n*3;
+  player.x+=dx*3;
+  player.y+=dy*3;
 
-    player.x=Math.max(-850,Math.min(850,player.x));
-    player.y=Math.max(-850,Math.min(850,player.y));
-  }
+  if(dx!==0)facing=dx>0?1:-1;
 
-  draw();
-  requestAnimationFrame(update);
+  walkPhase+=.24;
+ }
+
+ player.x=Math.max(-850,Math.min(850,player.x));
+ player.y=Math.max(-850,Math.min(850,player.y));
+
+ updateCamera();
+ draw();
+
+ requestAnimationFrame(update);
 }
 
 update();
