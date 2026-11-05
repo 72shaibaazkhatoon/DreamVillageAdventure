@@ -1,0 +1,202 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dream Village Adventure</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;font-family:Arial,sans-serif;
+ background:linear-gradient(#80dcff,#d9f7ff);
+ text-align:center;color:#304b36;
+}
+header{padding:15px}
+h1{color:#ff7b35;text-shadow:1px 2px white}
+#village{
+ height:270px;position:relative;overflow:hidden;
+ background:linear-gradient(#76d9ff 55%,#75d85c 55%);
+ border-bottom:8px solid #4da83d;
+}
+.sun{position:absolute;right:25px;top:15px;font-size:55px}
+.cloud{position:absolute;left:10%;top:25px;font-size:40px}
+.house{position:absolute;bottom:12px;font-size:75px}
+.h1{left:5%}.h2{left:38%}.h3{right:5%}
+.tree{position:absolute;bottom:12px;font-size:48px}
+.t1{left:23%}.t2{right:25%}
+.friends{font-size:55px;margin-top:12px}
+.panel{
+ background:white;margin:14px auto;padding:15px;
+ width:92%;max-width:500px;border-radius:22px;
+ box-shadow:0 5px 15px #438b8844;
+}
+button{
+ border:0;border-radius:18px;padding:13px 20px;
+ margin:6px;font-size:17px;font-weight:bold;
+ background:#ffbd42;color:#593b14;
+ cursor:pointer;touch-action:manipulation;
+}
+button:active{transform:scale(.96)}
+#play{background:#ff713e;color:white;font-size:23px;padding:15px 45px}
+#game{display:none}
+canvas{
+ width:100%;max-width:600px;
+ background:linear-gradient(#8cddff 60%,#79d85a 60%);
+ border-radius:15px;touch-action:none;
+}
+.controls button{min-width:105px;background:#78d8ff}
+#message{font-weight:bold;min-height:25px}
+</style>
+</head>
+<body>
+<header>
+<h1>🌈 Dream Village Adventure</h1>
+<div>✨ Run • Solve • Explore ✨</div>
+</header>
+
+<div id="home">
+<div id="village">
+<div class="sun">☀️</div>
+<div class="cloud">☁️</div>
+<div class="house h1">🏡</div>
+<div class="house h2">🏠</div>
+<div class="house h3">🏡</div>
+<div class="tree t1">🌳</div>
+<div class="tree t2">🌴</div>
+</div>
+<div class="panel">
+<h2>Meet Your Friends!</h2>
+<div class="friends" id="friends">👧 👦 🐶</div>
+<p>Choose your adventure friend:</p>
+<button onclick="choose('👧')">👧 Girl</button>
+<button onclick="choose('👦')">👦 Boy</button>
+<button onclick="choose('🐶')">🐶 Puppy</button>
+<br><br>
+<button id="play" onclick="startGame()">▶ PLAY</button>
+<p>Collect coins and explore the village!</p>
+</div>
+</div>
+
+<div id="game">
+<div class="panel">
+<h2>🏃 Coin Adventure</h2>
+<p>Coins: <span id="score">0</span> | Lives: <span id="lives">3</span></p>
+<canvas id="canvas" width="600" height="300"></canvas>
+<div class="controls">
+<button onclick="jump()">⬆ JUMP</button>
+<button onclick="move()">➡ MOVE</button>
+</div>
+<p id="message">Collect coins and avoid obstacles!</p>
+<button onclick="showPuzzle()">🧩 Village Puzzle</button>
+<button onclick="backHome()">🏡 Home</button>
+</div>
+</div>
+
+<script>
+let character="👧";
+let score=0,lives=3,playing=false;
+let player={x:75,y:205,vy:0};
+let objects=[];
+let frame=0;
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+function choose(c){
+ character=c;
+ document.getElementById("friends").textContent=c+" 👧 👦 🐶";
+}
+function startGame(){
+ document.getElementById("home").style.display="none";
+ document.getElementById("game").style.display="block";
+ score=0;lives=3;frame=0;
+ player={x:75,y:205,vy:0};
+ objects=[];
+ playing=true;
+ updateText();
+ requestAnimationFrame(loop);
+}
+function backHome(){
+ playing=false;
+ document.getElementById("game").style.display="none";
+ document.getElementById("home").style.display="block";
+}
+function jump(){
+ if(playing && player.y>=204) player.vy=-13;
+}
+function move(){
+ if(playing) player.x=Math.min(180,player.x+25);
+}
+document.addEventListener("keydown",e=>{
+ if(e.code==="Space"||e.code==="ArrowUp")jump();
+ if(e.code==="ArrowRight")move();
+});
+function updateText(){
+ document.getElementById("score").textContent=score;
+ document.getElementById("lives").textContent=lives;
+}
+function loop(){
+ if(!playing)return;
+ frame++;
+ ctx.clearRect(0,0,600,300);
+ ctx.font="35px Arial";
+ ctx.fillText("☀️",500,48);
+ ctx.fillText("🏡",400,175);
+ ctx.fillText("🌳",280,175);
+ ctx.fillStyle="#54b844";
+ ctx.fillRect(0,245,600,55);
+ ctx.fillStyle="#b88950";
+ ctx.fillRect(0,252,600,8);
+
+ if(frame%85===0){
+ objects.push({
+ x:610,
+ y:Math.random()>0.5?210:238,
+ type:Math.random()>0.55?"🪙":"🪨"
+ });
+ }
+ objects.forEach(o=>{
+ o.x-=4;
+ ctx.font="30px Arial";
+ ctx.fillText(o.type,o.x,o.y);
+ if(!o.hit && Math.abs(o.x-player.x)<32 &&
+ Math.abs(o.y-player.y)<42){
+ o.hit=true;
+ if(o.type==="🪙"){
+ score++;
+ document.getElementById("message").textContent="⭐ Great! Coin collected!";
+ }else if(player.y>205){
+ lives--;
+ document.getElementById("message").textContent="Oops! Avoid the rocks!";
+ }
+ updateText();
+ }
+ });
+ objects=objects.filter(o=>o.x>-40);
+ player.vy+=0.65;
+ player.y+=player.vy;
+ if(player.y>205){player.y=205;player.vy=0;}
+ ctx.font="42px Arial";
+ ctx.fillText(character,player.x,player.y+35);
+ if(lives<=0){
+ playing=false;
+ document.getElementById("message").textContent=
+ "Game over! You collected "+score+" coins.";
+ return;
+ }
+ requestAnimationFrame(loop);
+}
+function showPuzzle(){
+ if(!playing)return;
+ const answer=prompt("🌈 Puzzle: What colour is the sky on a sunny day?\\nA. Blue\\nB. Green\\nC. Pink");
+ if(answer && answer.trim().toLowerCase()==="a"){
+ score+=5;
+ updateText();
+ alert("🎉 Correct! You earned 5 coins!");
+ }else if(answer){
+ alert("Try again! The answer is A. Blue.");
+ }
+}
+</script>
+</body>
+</html>
