@@ -1,730 +1,728 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Dream Village Adventure V14</title>
+<title>Dream Village Adventure V15</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;overflow:hidden;font-family:Arial;background:#83d9ff;touch-action:none}
-canvas{display:block;width:100vw;height:100vh}
-#hud{
- position:fixed;top:10px;left:10px;color:white;
- background:#7845a8;padding:10px 14px;border-radius:15px;
- font-weight:bold;box-shadow:0 3px 8px #555;z-index:3
-}
-#message{
- position:fixed;top:65px;left:50%;transform:translateX(-50%);
- background:#fff2b8;padding:9px 13px;border-radius:12px;
- font-weight:bold;color:#704323;white-space:nowrap;
- font-size:13px;z-index:3
-}
-#controls{
- position:fixed;bottom:15px;left:0;right:0;
- display:flex;justify-content:space-between;padding:0 15px;
- pointer-events:none;z-index:3
-}
-.pad{display:grid;grid-template-columns:53px 53px 53px;
-grid-template-rows:53px 53px;gap:4px;pointer-events:auto}
-.control{
- border:2px solid white;border-radius:15px;
- background:#9b62d9;color:white;font-size:24px;
- font-weight:bold;box-shadow:0 3px 6px #555;
- touch-action:none;user-select:none
-}
-.control:active{background:#6332a3}
-#jump{width:70px;height:70px;border-radius:50%;
-align-self:end;background:#ff8bba;pointer-events:auto}
-#shop{
- position:fixed;right:12px;top:12px;border:0;
- border-radius:12px;background:#ffbd45;padding:11px;
- font-weight:bold;z-index:4
-}
-#shopPanel{
- display:none;position:fixed;z-index:10;left:50%;top:50%;
- transform:translate(-50%,-50%);width:270px;
- background:#fff4d7;border:4px solid #e6a64a;
- border-radius:20px;padding:20px;text-align:center;
- box-shadow:0 5px 30px #444
-}
-#shopPanel h2{color:#874ca5;margin:5px}
-.item{
- display:block;width:100%;margin-top:12px;padding:12px;
- border:0;border-radius:12px;background:#ffbc55;
- font-weight:bold;font-size:15px
-}
-#close{background:#9b62d9;color:white}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;background:#8bd6ff;touch-action:none}
+canvas{display:block;width:100%;height:100%}
+#hud{position:fixed;top:10px;left:10px;z-index:4;background:#55377deF;color:white;border:2px solid #ffe3a0;border-radius:18px;padding:10px 14px;font-weight:bold;box-shadow:0 4px 12px #263b4566}
+#message{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:4;background:#fff0b9;color:#68432c;border:2px solid white;border-radius:18px;padding:9px 13px;font-weight:bold;font-size:13px;max-width:58%;text-align:center}
+#shop{position:fixed;right:12px;top:12px;z-index:5;border:2px solid white;border-radius:16px;background:linear-gradient(#ffe49b,#f7a947);padding:12px 17px;font-size:17px;font-weight:bold;color:#704020;box-shadow:0 4px 10px #3335}
+#controls{position:fixed;bottom:15px;left:0;right:0;z-index:4;display:flex;justify-content:space-between;align-items:end;padding:0 18px;pointer-events:none}
+.pad{display:grid;grid-template-columns:54px 54px 54px;grid-template-rows:54px 54px;gap:4px;pointer-events:auto}
+.control{border:2px solid #fff9;border-radius:17px;background:#7653b9dd;color:white;font-size:25px;font-weight:bold;box-shadow:0 4px 8px #2226;touch-action:none;user-select:none}
+.control:active{background:#48317e}
+#jump{width:76px;height:76px;border-radius:50%;background:#e96eaa;font-size:15px}
+#panel{display:none;position:fixed;z-index:10;left:50%;top:50%;transform:translate(-50%,-50%);width:min(310px,90vw);padding:20px;background:#fff4dc;border:4px solid #d99b4b;border-radius:23px;text-align:center;box-shadow:0 8px 35px #2228;color:#70462c}
+#panel h2{margin:0 0 8px;color:#854b9e}
+.item{display:block;width:100%;padding:13px;margin-top:10px;border:0;border-radius:13px;background:#ffc66c;font-size:15px;font-weight:bold;color:#67401f}
+#close{background:#9871c8;color:white}
+#hint{position:fixed;bottom:5px;left:50%;transform:translateX(-50%);font-size:10px;color:white;text-shadow:0 1px 3px #333;z-index:2;pointer-events:none}
 </style>
 </head>
 <body>
-
 <canvas id="game"></canvas>
 
-<div id="hud">
-💰 Coins: <span id="coins">0</span> |
-👑 Princess
-</div>
-
-<div id="message">Welcome to Dream Village V14! 🌸</div>
-
+<div id="hud">💰 <span id="coins">0</span> &nbsp; 👑 Princess</div>
+<div id="message">Welcome to Dream Village! 🌸</div>
 <button id="shop">🏡 Shop</button>
-
-<div id="shopPanel">
-<h2>🌸 Village Shop</h2>
-<p>Welcome, Princess!</p>
-<p>Coins: <b id="shopCoins">0</b></p>
-<button class="item" id="flower">🌺 Buy flower accessory - 5 coins</button>
-<button class="item" id="dress">👗 Buy royal dress - 10 coins</button>
-<button class="item" id="close">Close</button>
-</div>
 
 <div id="controls">
  <div class="pad">
-  <button class="control" style="grid-column:2" data-key="up">⬆</button>
-  <button class="control" style="grid-column:1;grid-row:2" data-key="left">⬅</button>
-  <button class="control" style="grid-column:2;grid-row:2" data-key="down">⬇</button>
-  <button class="control" style="grid-column:3;grid-row:2" data-key="right">➡</button>
+  <button class="control" style="grid-column:2" data-key="up">▲</button>
+  <button class="control" style="grid-column:1;grid-row:2" data-key="left">◀</button>
+  <button class="control" style="grid-column:2;grid-row:2" data-key="down">▼</button>
+  <button class="control" style="grid-column:3;grid-row:2" data-key="right">▶</button>
  </div>
- <button class="control" id="jump">⬆</button>
+ <button class="control" id="jump">JUMP</button>
+</div>
+<div id="hint">Use arrows to explore your village</div>
+
+<div id="panel">
+ <h2>🌸 Village Shop</h2>
+ <p>Welcome, Princess!</p>
+ <p>💰 Coins: <b id="shopCoins">0</b></p>
+ <button class="item" id="flowerBuy">🌺 Flower crown — 5 coins</button>
+ <button class="item" id="dressBuy">👗 Royal gown — 10 coins</button>
+ <button class="item" id="close">Close shop</button>
 </div>
 
 <script>
+"use strict";
+
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
-
 let W=innerWidth,H=innerHeight,DPR=1;
 
 function resize(){
- W=innerWidth;
- H=innerHeight;
+ W=innerWidth;H=innerHeight;
  DPR=Math.min(devicePixelRatio||1,2);
- canvas.width=W*DPR;
- canvas.height=H*DPR;
+ canvas.width=Math.round(W*DPR);
+ canvas.height=Math.round(H*DPR);
  ctx.setTransform(DPR,0,0,DPR,0,0);
 }
-resize();
 addEventListener("resize",resize);
+resize();
 
-const world={w:2200,h:1500};
-
-const player={
- x:500,y:500,speed:3.5,
- dir:1,walk:0,jump:0,
- flowers:false,royal:false
-};
-
+const WORLD={w:2600,h:1900};
 const camera={x:0,y:0};
 const keys={};
-let coins=0;
-let messageTimer=0;
 let frame=0;
+let coins=Number(localStorage.getItem("dv15coins")||0);
+let flower=localStorage.getItem("dv15flower")==="yes";
+let royal=localStorage.getItem("dv15royal")==="yes";
+let messageTime=0;
 
-function say(t){
- document.getElementById("message").textContent=t;
- messageTimer=180;
+const player={
+ x:520,y:560,dir:1,walk:0,jump:0,
+ speed:3.5,moving:false
+};
+
+function say(s){
+ document.getElementById("message").textContent=s;
+ messageTime=180;
 }
 
-function rand(a,b){return Math.random()*(b-a)+a}
-function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function rand(a,b){return a+Math.random()*(b-a)}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function dist(x,y,a,b){return Math.hypot(x-a,y-b)}
 
-function roundRect(x,y,w,h,r,color){
+function ellipse(x,y,rx,ry,color){
  ctx.fillStyle=color;
  ctx.beginPath();
- ctx.roundRect(x,y,w,h,r);
+ ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
  ctx.fill();
 }
 
-const coinList=[];
-for(let i=0;i<45;i++){
- coinList.push({
-  x:rand(120,world.w-120),
-  y:rand(120,world.h-120),
-  got:false,spin:rand(0,6)
+function poly(points,color){
+ ctx.fillStyle=color;
+ ctx.beginPath();
+ ctx.moveTo(points[0][0],points[0][1]);
+ for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);
+ ctx.closePath();
+ ctx.fill();
+}
+
+function line(x1,y1,x2,y2,color,width=2){
+ ctx.strokeStyle=color;ctx.lineWidth=width;
+ ctx.lineCap="round";
+ ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+}
+
+function rounded(x,y,w,h,r,color){
+ ctx.fillStyle=color;
+ ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();
+}
+
+function updateUI(){
+ document.getElementById("coins").textContent=coins;
+ document.getElementById("shopCoins").textContent=coins;
+ localStorage.setItem("dv15coins",coins);
+ localStorage.setItem("dv15flower",flower?"yes":"no");
+ localStorage.setItem("dv15royal",royal?"yes":"no");
+}
+
+// Deterministic scenery
+let rng=13579;
+function seeded(){
+ rng=(rng*1664525+1013904223)>>>0;
+ return rng/4294967296;
+}
+
+const flowers=[];
+for(let i=0;i<440;i++){
+ flowers.push({
+  x:80+seeded()*(WORLD.w-160),
+  y:80+seeded()*(WORLD.h-160),
+  c:["#fff0a0","#ff9acb","#fff","#dca9ff","#ffbd75"][i%5],
+  size:1.5+seeded()*2
+ });
+}
+
+const trees=[];
+for(let i=0;i<85;i++){
+ trees.push({
+  x:100+seeded()*(WORLD.w-200),
+  y:100+seeded()*(WORLD.h-200),
+  s:.75+seeded()*.65
+ });
+}
+
+const houses=[
+ {x:190,y:180,c:"#bd654c",roof:"#a83f3c"},
+ {x:880,y:140,c:"#d39a60",roof:"#7651a1"},
+ {x:1610,y:210,c:"#d18a56",roof:"#a94349"},
+ {x:2050,y:720,c:"#c17a52",roof:"#7651a1"},
+ {x:280,y:1280,c:"#d6a16a",roof:"#a84d4c"},
+ {x:1500,y:1350,c:"#cf8b62",roof:"#a84d9d"}
+];
+
+const coinsList=[];
+for(let i=0;i<55;i++){
+ coinsList.push({
+  x:180+seeded()*(WORLD.w-360),
+  y:180+seeded()*(WORLD.h-360),
+  got:false,phase:seeded()*6
  });
 }
 
 const animals=[
- {x:330,y:300,type:"🐶",speed:0.7},
- {x:850,y:340,type:"🐰",speed:0.8},
- {x:1200,y:700,type:"🐑",speed:0.5},
- {x:1650,y:400,type:"🐥",speed:0.9},
- {x:600,y:1000,type:"🐱",speed:0.65},
- {x:1850,y:1100,type:"🐄",speed:0.45}
+ {x:370,y:430,type:"cow",speed:.38,angle:1},
+ {x:1050,y:430,type:"sheep",speed:.45,angle:2},
+ {x:1390,y:800,type:"rabbit",speed:.65,angle:3},
+ {x:1870,y:550,type:"chicken",speed:.7,angle:4},
+ {x:620,y:1450,type:"sheep",speed:.4,angle:1.5},
+ {x:2110,y:1290,type:"cow",speed:.35,angle:5},
+ {x:1150,y:1450,type:"rabbit",speed:.6,angle:2.5}
 ];
-
-for(const a of animals){
- a.angle=rand(0,Math.PI*2);
- a.timer=rand(50,150);
+animals.forEach(a=>{
+ a.timer=rand(60,180);
  a.walk=rand(0,6);
- a.turn=1;
-}
+ a.bob=rand(0,6);
+});
 
-const houses=[
- {x:180,y:180,c:"#e76e78"},
- {x:1450,y:180,c:"#8c78d6"},
- {x:300,y:1050,c:"#e8a443"},
- {x:1510,y:1000,c:"#e76eaa"}
-];
-
-const trees=[];
-for(let i=0;i<35;i++){
- trees.push({
-  x:120+(i*311)%1950,
-  y:100+(i*197)%1280
- });
-}
-
+// Ground and paths
 function drawGround(){
- ctx.fillStyle="#79cf70";
- ctx.fillRect(0,0,world.w,world.h);
+ let g=ctx.createLinearGradient(0,0,0,WORLD.h);
+ g.addColorStop(0,"#83cf76");
+ g.addColorStop(1,"#5eae62");
+ ctx.fillStyle=g;
+ ctx.fillRect(0,0,WORLD.w,WORLD.h);
 
- for(let x=0;x<world.w;x+=90){
-  for(let y=0;y<world.h;y+=90){
-   ctx.fillStyle=(x/90+y/90)%2?"#80d775":"#76cb6c";
-   ctx.fillRect(x,y,90,90);
-  }
- }
-
- // Village roads
- ctx.fillStyle="#e9cf91";
- ctx.fillRect(0,690,world.w,100);
- ctx.fillRect(1050,0,105,world.h);
-
- // Road decorations
- for(let x=20;x<world.w;x+=90){
-  ctx.fillStyle="#d8b879";
+ // Subtle grass texture
+ for(let i=0;i<700;i++){
+  let x=(i*173)%WORLD.w;
+  let y=(i*293)%WORLD.h;
+  ctx.strokeStyle=i%2?"#a6e18a55":"#367f4855";
+  ctx.lineWidth=1;
   ctx.beginPath();
-  ctx.arc(x,740,3,0,Math.PI*2);
-  ctx.fill();
+  ctx.moveTo(x,y);ctx.lineTo(x+3,y-5);ctx.stroke();
  }
 
- // Flowers
- for(let i=0;i<200;i++){
-  let x=(i*173)%world.w;
-  let y=(i*293)%world.h;
+ // Main winding road
+ ctx.lineCap="round";
+ ctx.lineJoin="round";
+ ctx.strokeStyle="#bd9b67";
+ ctx.lineWidth=155;
+ ctx.beginPath();
+ ctx.moveTo(-50,850);
+ ctx.bezierCurveTo(500,760,650,930,1080,830);
+ ctx.bezierCurveTo(1500,730,1900,950,2650,690);
+ ctx.stroke();
 
-  ctx.fillStyle=["#ff77b7","#fff4a3","#ffffff"][i%3];
-  ctx.beginPath();
-  ctx.arc(x,y,3,0,Math.PI*2);
-  ctx.fill();
+ ctx.strokeStyle="#e5c995";
+ ctx.lineWidth=135;
+ ctx.beginPath();
+ ctx.moveTo(-50,850);
+ ctx.bezierCurveTo(500,760,650,930,1080,830);
+ ctx.bezierCurveTo(1500,730,1900,950,2650,690);
+ ctx.stroke();
+
+ // Cross path
+ ctx.strokeStyle="#e5c995";
+ ctx.lineWidth=100;
+ ctx.beginPath();
+ ctx.moveTo(1200,-50);
+ ctx.bezierCurveTo(1100,400,1400,700,1250,1100);
+ ctx.bezierCurveTo(1200,1450,1300,1650,1300,1950);
+ ctx.stroke();
+
+ // Little stream
+ ctx.strokeStyle="#4b9cbb";
+ ctx.lineWidth=75;
+ ctx.beginPath();
+ ctx.moveTo(1850,-30);
+ ctx.bezierCurveTo(1760,400,2150,550,1980,930);
+ ctx.bezierCurveTo(1830,1260,2210,1450,2200,1930);
+ ctx.stroke();
+
+ ctx.strokeStyle="#a5e8ed";
+ ctx.lineWidth=7;
+ ctx.beginPath();
+ ctx.moveTo(1838,10);
+ ctx.bezierCurveTo(1750,400,2135,550,1965,930);
+ ctx.stroke();
+
+ // Flower beds
+ for(const f of flowers){
+  if(f.x<camera.x-80||f.x>camera.x+W+80||
+     f.y<camera.y-80||f.y>camera.y+H+80)continue;
+  ctx.fillStyle=f.c;
+  ellipse(f.x,f.y,f.size,f.size*1.5,f.c);
+  ellipse(f.x+3,f.y-2,f.size,f.size*1.3,f.c);
+  ellipse(f.x-3,f.y-2,f.size,f.size*1.3,f.c);
+  ellipse(f.x,f.y,1.5,1.5,"#f5d65e");
  }
+}
+
+function drawTree(t){
+ const x=t.x,y=t.y,s=t.s;
+ ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+
+ ellipse(4,35,32,10,"#285c3b44");
+ // trunk
+ poly([[-10,15],[-7,-18],[8,-18],[12,20]],"#79502f");
+ line(-5,-2,4,-19,"#a77a4a",4);
+
+ // Layered leaves
+ ellipse(0,-42,43,38,"#237c3e");
+ ellipse(-24,-53,29,31,"#319c4b");
+ ellipse(22,-56,30,32,"#45ad53");
+ ellipse(0,-72,26,30,"#5cbd5d");
+ ellipse(-12,-82,13,13,"#8ad96d");
+ ellipse(20,-65,12,13,"#8ad96d");
+
+ // Sunlit highlights
+ ellipse(-19,-62,7,5,"#a1df77");
+ ellipse(15,-83,6,5,"#9cde73");
+ ctx.restore();
 }
 
 function drawHouse(h){
  let x=h.x,y=h.y;
+ ctx.save();ctx.translate(x,y);
 
- // Shadow
- ctx.fillStyle="#456b3c44";
- ctx.fillRect(x-8,y+145,160,12);
+ // Garden shadow
+ ellipse(78,164,108,18,"#315a3b44");
 
- // Walls
- roundRect(x,y+45,145,110,5,"#a65d38");
+ // House walls
+ rounded(0,50,155,112,8,h.c);
+ // Side wall
+ poly([[155,55],[186,38],[186,143],[155,162]],"#9c654c");
+
+ // Wall highlights
+ rounded(9,58,137,6,3,"#ffffff33");
 
  // Roof
- ctx.fillStyle=h.c;
- ctx.beginPath();
- ctx.moveTo(x-15,y+50);
- ctx.lineTo(x+72,y-20);
- ctx.lineTo(x+160,y+50);
- ctx.closePath();
- ctx.fill();
+ poly([[-16,57],[72,-10],[170,57],[155,68],[72,5],[0,69]],h.roof);
+ poly([[72,-10],[170,57],[155,68],[72,5]],"#793c42");
 
- // Roof decoration
- ctx.strokeStyle="#ffffff77";
- ctx.lineWidth=4;
- ctx.beginPath();
- ctx.moveTo(x+72,y-15);
- ctx.lineTo(x+72,y+45);
- ctx.stroke();
+ // Roof tile lines
+ for(let i=0;i<5;i++){
+  line(18+i*24,37-i*15,85+i*16,76-i*4,"#eaa17a88",3);
+ }
+ line(3,58,160,58,"#f4b47d",4);
 
  // Windows
- roundRect(x+16,y+75,35,35,4,"#8be4ff");
- roundRect(x+94,y+75,35,35,4,"#8be4ff");
+ rounded(18,83,35,39,5,"#8bd7e6");
+ rounded(105,83,35,39,5,"#8bd7e6");
+ line(35,84,35,121,"#fff0c8",3);
+ line(18,101,53,101,"#fff0c8",3);
+ line(122,84,122,121,"#fff0c8",3);
+ line(105,101,140,101,"#fff0c8",3);
 
- ctx.strokeStyle="#ffffff";
- ctx.lineWidth=3;
- ctx.beginPath();
- ctx.moveTo(x+33,y+75);
- ctx.lineTo(x+33,y+110);
- ctx.moveTo(x+16,y+92);
- ctx.lineTo(x+51,y+92);
- ctx.stroke();
+ // Window sill
+ line(15,124,56,124,"#80503a",4);
+ line(102,124,143,124,"#80503a",4);
 
  // Door
- roundRect(x+60,y+100,30,55,5,"#75412c");
+ rounded(62,99,32,63,8,"#74452e");
+ ellipse(87,132,2.5,2.5,"#fbd47c");
 
- ctx.fillStyle="#ffdc80";
- ctx.beginPath();
- ctx.arc(x+83,y+128,3,0,Math.PI*2);
- ctx.fill();
-}
-
-function drawTree(t){
- ctx.fillStyle="#79502e";
- ctx.fillRect(t.x-8,t.y,16,40);
-
- ctx.fillStyle="#168b43";
- ctx.beginPath();
- ctx.arc(t.x,t.y-5,29,0,Math.PI*2);
- ctx.fill();
-
- ctx.fillStyle="#42b85b";
- ctx.beginPath();
- ctx.arc(t.x-12,t.y-17,16,0,Math.PI*2);
- ctx.fill();
-
- ctx.fillStyle="#78dc71";
- ctx.beginPath();
- ctx.arc(t.x+12,t.y-13,12,0,Math.PI*2);
- ctx.fill();
-}
-
-function drawFence(){
- ctx.strokeStyle="#9b6335";
- ctx.lineWidth=9;
- ctx.strokeRect(40,40,world.w-80,world.h-80);
-
- ctx.strokeStyle="#e2b77b";
+ // Door arch
+ ctx.strokeStyle="#f5d09b";
  ctx.lineWidth=3;
+ ctx.beginPath();ctx.arc(78,100,17,Math.PI,0);ctx.stroke();
 
- for(let x=40;x<=world.w-40;x+=28){
-  ctx.beginPath();
-  ctx.moveTo(x,40);
-  ctx.lineTo(x,68);
-  ctx.moveTo(x,world.h-40);
-  ctx.lineTo(x,world.h-68);
-  ctx.stroke();
- }
+ // Chimney
+ rounded(116,-19,17,36,3,"#a85e4b");
+ line(115,-15,134,-15,"#e6b18a",3);
 
- for(let y=40;y<=world.h-40;y+=28){
-  ctx.beginPath();
-  ctx.moveTo(40,y);
-  ctx.lineTo(68,y);
-  ctx.moveTo(world.w-40,y);
-  ctx.lineTo(world.w-68,y);
-  ctx.stroke();
+ // Flower pot
+ rounded(7,143,15,13,3,"#b95d42");
+ line(14,143,9,134,"#428b48",2);
+ line(14,143,20,133,"#428b48",2);
+
+ ctx.restore();
+}
+
+function drawFenceSegment(x1,y1,x2,y2){
+ line(x1,y1,x2,y2,"#8a592f",7);
+ line(x1,y1-10,x2,y2-10,"#b77c49",7);
+ for(let t=0;t<=1;t+=.12){
+  let x=x1+(x2-x1)*t,y=y1+(y2-y1)*t;
+  line(x,y-19,x,y+5,"#8a592f",5);
  }
 }
 
-// Detailed animated princess
+function drawBridge(){
+ ctx.save();
+ ctx.translate(2000,800);
+ // Bridge over stream
+ ellipse(0,35,120,18,"#315a3b44");
+ poly([[-110,0],[-90,-22],[90,-22],[110,0],[100,30],[-100,30]],"#a88a69");
+ line(-92,-15,92,-15,"#e5c99a",8);
+ for(let x=-80;x<=80;x+=24){
+  line(x,-15,x,-55,"#8b6545",5);
+ }
+ line(-92,-55,92,-55,"#b38b60",7);
+ ctx.restore();
+}
+
+// Character is drawn as a layered rear-facing adventure sprite
 function drawPrincess(){
- let p=player;
- let swing=Math.sin(p.walk)*6;
- let bob=Math.abs(Math.sin(p.walk))*2;
- let side=p.dir;
+ const p=player;
+ let walk=p.moving?Math.sin(p.walk):0;
+ let bob=p.moving?Math.abs(Math.sin(p.walk))*2:0;
 
  ctx.save();
  ctx.translate(p.x,p.y-p.jump);
- ctx.scale(side,1);
+ // Soft ground shadow
+ ellipse(0,28+p.jump,24,9,"#24452c55");
 
- // Shadow
- ctx.fillStyle="#345d3155";
+ // Hair flowing behind
+ ctx.fillStyle="#63352b";
  ctx.beginPath();
- ctx.ellipse(0,31+p.jump,23,7,0,0,Math.PI*2);
- ctx.fill();
+ ctx.moveTo(-12,-37);
+ ctx.bezierCurveTo(-35,-18,-28,7,-15,14);
+ ctx.quadraticCurveTo(0,22,16,13);
+ ctx.bezierCurveTo(31,-2,26,-24,12,-39);
+ ctx.closePath();ctx.fill();
 
- // Back hair
- ctx.fillStyle="#46252a";
- ctx.beginPath();
- ctx.ellipse(-1,-20,19,27,0,0,Math.PI*2);
- ctx.fill();
-
- // Hair strands
- ctx.fillStyle="#24151d";
- ctx.beginPath();
- ctx.moveTo(-17,-33);
- ctx.quadraticCurveTo(-27,-5,-15,12);
- ctx.lineTo(-9,9);
- ctx.lineTo(-11,-25);
- ctx.fill();
+ // Hair highlights
+ line(-17,-25,-19,2,"#a96b48",3);
+ line(-10,-30,-8,9,"#c18458",2);
+ line(16,-25,19,3,"#9b6144",3);
 
  // Legs
- ctx.strokeStyle="#f5bd91";
- ctx.lineWidth=7;
- ctx.lineCap="round";
-
- ctx.beginPath();
- ctx.moveTo(-7,11+bob);
- ctx.lineTo(-8+swing,26+bob);
- ctx.moveTo(7,11+bob);
- ctx.lineTo(8-swing,26+bob);
- ctx.stroke();
+ ctx.strokeStyle="#efbc96";
+ ctx.lineWidth=8;
+ line(-8,9,-9+walk*6,25+bob,"#efbc96",8);
+ line(8,9,9-walk*6,25+bob,"#efbc96",8);
 
  // Shoes
- ctx.fillStyle="#e94c91";
- ctx.beginPath();
- ctx.ellipse(-10+swing,28+bob,9,5,0,0,Math.PI*2);
- ctx.ellipse(10-swing,28+bob,9,5,0,0,Math.PI*2);
- ctx.fill();
+ ellipse(-10+walk*6,27+bob,8,5,"#e45c9c");
+ ellipse(10-walk*6,27+bob,8,5,"#e45c9c");
 
- // Dress
- let dressColor=p.royal?"#9b64e9":"#ed82cf";
- ctx.fillStyle=dressColor;
- ctx.beginPath();
- ctx.moveTo(-10,-17+bob);
- ctx.quadraticCurveTo(-15,-3,-26,17);
- ctx.quadraticCurveTo(0,29,26,17);
- ctx.quadraticCurveTo(15,-3,10,-17+bob);
- ctx.closePath();
- ctx.fill();
+ // Gown silhouette
+ let dressColor=royal?"#9560df":"#ed79b8";
+ let grad=ctx.createLinearGradient(-25,0,25,20);
+ grad.addColorStop(0,royal?"#7542be":"#c64e91");
+ grad.addColorStop(.45,dressColor);
+ grad.addColorStop(1,royal?"#c29aff":"#ffb2d9");
 
- // Dress decoration
- ctx.strokeStyle="#ffe5f5";
- ctx.lineWidth=2;
- ctx.beginPath();
- ctx.moveTo(0,-12);
- ctx.lineTo(0,20);
- ctx.stroke();
+ poly([[-10,-19],[10,-19],[15,-4],[28,18],[19,25],[0,28],[-19,25],[-28,18],[-15,-4]],grad);
 
- ctx.fillStyle="#ffdaef";
- ctx.beginPath();
- ctx.arc(0,5,3,0,Math.PI*2);
- ctx.fill();
+ // Skirt folds
+ line(-13,-5,-20,17,"#ffd0e6",2);
+ line(-4,-3,-7,23,"#ffd0e6",2);
+ line(8,-3,10,23,"#bb4c91",2);
+ line(15,-5,22,18,"#ffd0e6",2);
 
- // Backpack
- roundRect(-21,-13,9,19,4,"#f2a34a");
- ctx.fillStyle="#ffdf91";
- ctx.beginPath();
- ctx.arc(-17,-8,2,0,Math.PI*2);
- ctx.fill();
+ // Embroidery
+ for(let i=0;i<5;i++){
+  let xx=-16+i*8;
+  ellipse(xx,17+Math.abs(xx)*.18,1.8,3,"#fff0d0");
+ }
+
+ // Waist ribbon
+ rounded(-10,-8,20,6,3,"#ffe3a5");
+ ellipse(0,-5,4,4,"#fff0bd");
 
  // Arms
- let armSwing=Math.sin(p.walk)*7;
+ line(-10,-14,-18+walk*5,-1,"#efbc96",6);
+ line(10,-14,18-walk*5,-1,"#efbc96",6);
+ ellipse(-18+walk*5,-1,4,4,"#efbc96");
+ ellipse(18-walk*5,-1,4,4,"#efbc96");
 
- ctx.strokeStyle="#f5bd91";
- ctx.lineWidth=6;
- ctx.beginPath();
- ctx.moveTo(-10,-10+bob);
- ctx.lineTo(-18+armSwing,-1+bob);
- ctx.moveTo(10,-10+bob);
- ctx.lineTo(18-armSwing,-1+bob);
- ctx.stroke();
-
- // Hands
- ctx.fillStyle="#f5bd91";
- ctx.beginPath();
- ctx.arc(-18+armSwing,-1+bob,4,0,Math.PI*2);
- ctx.arc(18-armSwing,-1+bob,4,0,Math.PI*2);
- ctx.fill();
-
- // Neck
- roundRect(-5,-23+bob,10,12,4,"#f5bd91");
-
- // Face
- ctx.fillStyle="#f5bd91";
- ctx.beginPath();
- ctx.ellipse(0,-32+bob,15,18,0,0,Math.PI*2);
- ctx.fill();
+ // Neck and head
+ rounded(-5,-29,10,13,4,"#efbc96");
+ ellipse(0,-39,15,17,"#efbc96");
 
  // Hair cap
- ctx.fillStyle="#24151d";
+ ctx.fillStyle="#60352c";
  ctx.beginPath();
- ctx.moveTo(-15,-33+bob);
- ctx.quadraticCurveTo(-20,-58+bob,0,-55+bob);
- ctx.quadraticCurveTo(19,-56+bob,15,-33+bob);
- ctx.quadraticCurveTo(5,-43+bob,-2,-37+bob);
- ctx.quadraticCurveTo(-9,-29+bob,-15,-33+bob);
+ ctx.moveTo(-15,-42);
+ ctx.bezierCurveTo(-20,-66,15,-69,16,-42);
+ ctx.quadraticCurveTo(7,-49,1,-44);
+ ctx.quadraticCurveTo(-7,-38,-15,-42);
  ctx.fill();
 
- // Side hair
- ctx.fillStyle="#46252a";
- ctx.beginPath();
- ctx.ellipse(13,-31+bob,6,17,0,0,Math.PI*2);
- ctx.fill();
-
- // Eyes
- ctx.fillStyle="#fff";
- ctx.beginPath();
- ctx.ellipse(-5,-32+bob,3.5,4.5,0,0,Math.PI*2);
- ctx.ellipse(5,-32+bob,3.5,4.5,0,0,Math.PI*2);
- ctx.fill();
-
- ctx.fillStyle="#4a3029";
- ctx.beginPath();
- ctx.arc(-5,-32+bob,2,0,Math.PI*2);
- ctx.arc(5,-32+bob,2,0,Math.PI*2);
- ctx.fill();
-
- // Smile
- ctx.strokeStyle="#a84d5e";
- ctx.lineWidth=1.5;
- ctx.beginPath();
- ctx.arc(0,-26+bob,4,0.2,2.9);
- ctx.stroke();
+ // Hair side locks
+ ellipse(-13,-34,5,13,"#75412e");
+ ellipse(13,-34,5,13,"#75412e");
 
  // Crown
- ctx.fillStyle="#ffd83d";
- ctx.beginPath();
- ctx.moveTo(-12,-48+bob);
- ctx.lineTo(-11,-59+bob);
- ctx.lineTo(-4,-52+bob);
- ctx.lineTo(0,-64+bob);
- ctx.lineTo(5,-52+bob);
- ctx.lineTo(12,-59+bob);
- ctx.lineTo(12,-48+bob);
- ctx.closePath();
- ctx.fill();
+ poly([[-12,-51],[-10,-62],[-3,-55],[0,-68],[5,-55],[12,-62],[13,-49]],"#f6c83d");
+ line(-11,-49,12,-49,"#fff1a3",3);
+ ellipse(0,-59,3,3,"#f36c9e");
 
- ctx.fillStyle="#ff5c9c";
- ctx.beginPath();
- ctx.arc(0,-56+bob,2.5,0,Math.PI*2);
- ctx.fill();
-
- // Flower accessory
- if(p.flowers){
-  ctx.fillStyle="#ff70b4";
+ if(flower){
   for(let i=0;i<5;i++){
    let a=i*Math.PI*2/5;
-   ctx.beginPath();
-   ctx.arc(-10+Math.cos(a)*5,-48+Math.sin(a)*5+bob,3,0,Math.PI*2);
-   ctx.fill();
+   ellipse(-11+Math.cos(a)*4,-45+Math.sin(a)*4,3,3,"#ff78b4");
   }
-  ctx.fillStyle="#ffd83d";
-  ctx.beginPath();
-  ctx.arc(-10,-48+bob,2,0,Math.PI*2);
-  ctx.fill();
+  ellipse(-11,-45,2,2,"#ffdf6a");
  }
 
  ctx.restore();
 }
 
-function drawCoin(c){
- if(c.got)return;
-
- let pulse=1+Math.sin(frame*0.08+c.spin)*0.15;
-
- ctx.save();
- ctx.translate(c.x,c.y);
- ctx.scale(pulse,1);
-
- ctx.fillStyle="#ffd329";
- ctx.beginPath();
- ctx.arc(0,0,10,0,Math.PI*2);
- ctx.fill();
-
- ctx.strokeStyle="#fff4a0";
- ctx.lineWidth=3;
- ctx.stroke();
-
- ctx.fillStyle="#b47a00";
- ctx.font="bold 12px Arial";
- ctx.textAlign="center";
- ctx.fillText("$",0,4);
-
- ctx.restore();
-}
-
-// Animals wander around the village
-function updateAnimals(){
- for(const a of animals){
-  a.timer--;
-
-  if(a.timer<=0){
-   a.angle=rand(0,Math.PI*2);
-   a.timer=rand(70,180);
-  }
-
-  let nx=a.x+Math.cos(a.angle)*a.speed;
-  let ny=a.y+Math.sin(a.angle)*a.speed;
-
-  if(nx<90||nx>world.w-90||ny<90||ny>world.h-90){
-   a.angle+=Math.PI;
-  }else{
-   a.x=nx;
-   a.y=ny;
-  }
-
-  a.turn=Math.cos(a.angle)>=0?1:-1;
-  a.walk+=0.15;
- }
-}
-
+// Detailed animal drawings, no emoji sprites
 function drawAnimal(a){
  ctx.save();
  ctx.translate(a.x,a.y);
- ctx.scale(a.turn,1);
+ ctx.scale(Math.cos(a.angle)>=0?1:-1,1);
+ const step=Math.sin(a.walk)*3;
 
- let bounce=Math.abs(Math.sin(a.walk))*3;
+ ellipse(0,13,24,6,"#315a3b44");
 
- // Ground shadow
- ctx.fillStyle="#345d3155";
- ctx.beginPath();
- ctx.ellipse(0,7,16,5,0,0,Math.PI*2);
- ctx.fill();
-
- // Animal movement
- ctx.translate(0,-bounce);
- ctx.font="34px Arial";
- ctx.textAlign="center";
- ctx.textBaseline="middle";
- ctx.fillText(a.type,0,0);
-
+ if(a.type==="cow"){
+  // Legs
+  for(let x of [-13,12]){
+   line(x,2,x+step,15,"#e8dfd2",6);
+   line(x+step,15,x+step,17,"#514c4a",5);
+  }
+  // Body
+  ellipse(0,-3,25,16,"#f4eee2");
+  ellipse(-13,-8,8,8,"#37363b");
+  ellipse(11,1,8,8,"#34343b");
+  // Neck and head
+  ellipse(22,-12,11,11,"#f1e8d9");
+  ellipse(29,-7,7,5,"#edaa9d");
+  // Ears
+  ellipse(14,-18,7,4,"#eee4d6");
+  ellipse(35,-19,6,4,"#eee4d6");
+  // Horns
+  line(20,-21,17,-27,"#d9c39a",3);
+  line(32,-21,36,-27,"#d9c39a",3);
+  ellipse(26,-13,2,2,"#333");
+  // Tail
+  line(-23,-5,-30+Math.sin(a.walk)*3,-13,"#e9dfd2",3);
+ }else if(a.type==="sheep"){
+  // Legs
+  for(let x of [-12,10])line(x,2,x+step,15,"#6c5548",5);
+  // Wool
+  for(let i=0;i<7;i++){
+   let x=-19+(i%4)*12;
+   let y=-8+Math.floor(i/4)*9;
+   ellipse(x,y,10,10,"#fff8e9");
+  }
+  // Face
+  ellipse(22,-7,10,12,"#bd947b");
+  ellipse(26,-8,2,2,"#292522");
+  ellipse(30,-2,3,2,"#e99d9b");
+  ellipse(16,-17,5,5,"#d9ad98");
+ }else if(a.type==="rabbit"){
+  // Feet
+  ellipse(-7,12,8,4,"#c58e70");
+  ellipse(10,12,8,4,"#c58e70");
+  // Body
+  ellipse(0,-1,19,14,"#d7ae88");
+  // Head
+  ellipse(17,-10,12,12,"#e7c29c");
+  // Ears
+  ctx.save();ctx.rotate(Math.sin(a.walk)*.12);
+  ellipse(12,-29,5,14,"#d9b08b");
+  ellipse(22,-29,5,13,"#d9b08b");
+  ellipse(12,-29,2,9,"#e98e9d");
+  ellipse(22,-29,2,8,"#e98e9d");
+  ctx.restore();
+  // Tail
+  ellipse(-17,-1,6,6,"#fff1df");
+  ellipse(20,-12,2,2,"#42302a");
+  ellipse(27,-5,3,2,"#dc8b94");
+ }else if(a.type==="chicken"){
+  // Legs
+  line(-4,3,-5+step,15,"#d88a36",3);
+  line(7,3,8-step,15,"#d88a36",3);
+  // Body
+  ellipse(0,-4,17,14,"#fff4df");
+  // Wing
+  ellipse(-5,-5,9,7,"#e9d7b8");
+  // Head
+  ellipse(12,-17,9,9,"#fff1d9");
+  // Comb
+  ellipse(8,-27,3,4,"#cf4541");
+  ellipse(13,-28,3,4,"#cf4541");
+  ellipse(17,-26,3,4,"#cf4541");
+  // Beak
+  poly([[20,-17],[29,-14],[20,-11]],"#e8a23d");
+  ellipse(14,-18,1.7,1.7,"#302820");
+  // Tail
+  ellipse(-16,-11,5,5,"#f0e0c5");
+ }
  ctx.restore();
 }
 
-function draw(){
- ctx.clearRect(0,0,W,H);
+function drawCoins(){
+ for(const c of coinsList){
+  if(c.got)continue;
+  if(c.x<camera.x-40||c.x>camera.x+W+40||
+     c.y<camera.y-40||c.y>camera.y+H+40)continue;
+
+  let pulse=1+Math.sin(frame*.08+c.phase)*.1;
+  ctx.save();
+  ctx.translate(c.x,c.y+Math.sin(frame*.06+c.phase)*3);
+  ctx.scale(pulse,1);
+
+  ellipse(2,5,12,4,"#526c3455");
+  let g=ctx.createRadialGradient(-4,-5,1,0,0,12);
+  g.addColorStop(0,"#fff6a7");
+  g.addColorStop(.5,"#ffd53b");
+  g.addColorStop(1,"#d88b13");
+  ellipse(0,0,10,12,g);
+  ctx.strokeStyle="#fff0a0";ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(0,0,10,12,0,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle="#a66c0d";ctx.font="bold 12px Arial";
+  ctx.textAlign="center";ctx.fillText("$",0,4);
+  ctx.restore();
+ }
+}
+
+function drawWorld(){
  ctx.save();
  ctx.translate(-camera.x,-camera.y);
 
  drawGround();
 
- for(const h of houses)drawHouse(h);
- for(const t of trees)drawTree(t);
- for(const c of coinList)drawCoin(c);
+ // Sort scenery by depth
+ const objects=[];
+ for(const t of trees)objects.push({y:t.y,draw:()=>drawTree(t)});
+ for(const h of houses)objects.push({y:h.y+160,draw:()=>drawHouse(h)});
+ objects.push({y:835,draw:drawBridge});
 
- // Draw animals and princess
- for(const a of animals)drawAnimal(a);
+ objects.sort((a,b)=>a.y-b.y);
+ for(const o of objects){
+  if(o.y>camera.y-120&&o.y<camera.y+H+120)o.draw();
+ }
 
- drawPrincess();
- drawFence();
+ drawCoins();
+
+ // Animals and princess are depth sorted
+ const actors=animals.map(a=>({y:a.y,draw:()=>drawAnimal(a)}));
+ actors.push({y:player.y,draw:drawPrincess});
+ actors.sort((a,b)=>a.y-b.y);
+ for(const a of actors)a.draw();
+
+ // Boundary fence
+ ctx.strokeStyle="#8b5c35";ctx.lineWidth=13;
+ ctx.strokeRect(42,42,WORLD.w-84,WORLD.h-84);
+ ctx.strokeStyle="#d4a477";ctx.lineWidth=3;
+ ctx.strokeRect(48,48,WORLD.w-96,WORLD.h-96);
 
  ctx.restore();
+}
+
+function updateAnimals(){
+ for(const a of animals){
+  a.timer--;
+  if(a.timer<=0){
+   a.angle=rand(0,Math.PI*2);
+   a.timer=rand(80,200);
+  }
+
+  let nx=a.x+Math.cos(a.angle)*a.speed;
+  let ny=a.y+Math.sin(a.angle)*a.speed;
+
+  if(nx<90||nx>WORLD.w-90||ny<90||ny>WORLD.h-90){
+   a.angle+=Math.PI;
+  }else{
+   a.x=nx;a.y=ny;
+  }
+  a.walk+=.13;
+ }
 }
 
 function update(){
  frame++;
 
  let dx=0,dy=0;
-
  if(keys.left||keys.a)dx--;
  if(keys.right||keys.d)dx++;
  if(keys.up||keys.w)dy--;
  if(keys.down||keys.s)dy++;
 
- if(dx||dy){
+ player.moving=!!(dx||dy);
+
+ if(player.moving){
   let len=Math.hypot(dx,dy);
   dx=dx/len*player.speed;
   dy=dy/len*player.speed;
-
-  player.walk+=0.22;
-
+  player.walk+=.22;
   if(dx)player.dir=Math.sign(dx);
+
+  let nx=clamp(player.x+dx,75,WORLD.w-75);
+  let ny=clamp(player.y+dy,75,WORLD.h-75);
+  player.x=nx;player.y=ny;
  }else{
-  player.walk*=0.85;
+  player.walk*=.85;
  }
 
- let nx=player.x+dx;
- let ny=player.y+dy;
-
- // Strong village boundaries
- if(nx>75&&nx<world.w-75)player.x=nx;
- if(ny>75&&ny<world.h-75)player.y=ny;
-
- // Jump
  if(player.jump>0)player.jump=Math.max(0,player.jump-1);
 
- // Camera
- camera.x=player.x-W/2;
- camera.y=player.y-H/2;
+ camera.x=clamp(player.x-W/2,0,WORLD.w-W);
+ camera.y=clamp(player.y-H/2,0,WORLD.h-H);
 
- camera.x=Math.max(0,Math.min(world.w-W,camera.x));
- camera.y=Math.max(0,Math.min(world.h-H,camera.y));
-
- // Collect coins
- for(const c of coinList){
-  if(!c.got&&Math.hypot(player.x-c.x,player.y-c.y)<28){
-   c.got=true;
-   coins++;
-   updateCoinDisplay();
-   say("You found a golden coin! ✨");
+ // Coin collection
+ for(const c of coinsList){
+  if(!c.got&&dist(player.x,player.y,c.x,c.y)<31){
+   c.got=true;coins++;
+   updateUI();
+   say("Golden coin collected! ✨");
   }
  }
 
  updateAnimals();
 }
 
-function updateCoinDisplay(){
- document.getElementById("coins").textContent=coins;
- document.getElementById("shopCoins").textContent=coins;
-}
-
 function loop(){
  update();
- draw();
-
- if(messageTimer>0)messageTimer--;
-
+ drawWorld();
+ if(messageTime>0)messageTime--;
  requestAnimationFrame(loop);
 }
 
-// Mobile controls
+// Controls
 document.querySelectorAll("[data-key]").forEach(btn=>{
- const k=btn.dataset.key;
-
+ let k=btn.dataset.key;
  btn.addEventListener("pointerdown",e=>{
-  e.preventDefault();
-  keys[k]=true;
+  e.preventDefault();keys[k]=true;
   btn.setPointerCapture(e.pointerId);
  });
-
- function release(){
-  keys[k]=false;
- }
-
+ const release=()=>keys[k]=false;
  btn.addEventListener("pointerup",release);
  btn.addEventListener("pointercancel",release);
  btn.addEventListener("lostpointercapture",release);
 });
 
 addEventListener("keydown",e=>{
- keys[e.key.toLowerCase()]=true;
+ let k=e.key.toLowerCase();
+ keys[k]=true;
+ if(["arrowup","arrowdown","arrowleft","arrowright"," "].includes(k))e.preventDefault();
 });
-
-addEventListener("keyup",e=>{
- keys[e.key.toLowerCase()]=false;
-});
+addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+addEventListener("blur",()=>Object.keys(keys).forEach(k=>keys[k]=false));
 
 document.getElementById("jump").addEventListener("pointerdown",e=>{
  e.preventDefault();
- player.jump=18;
+ player.jump=20;
  say("Princess is jumping! 🌟");
 });
 
-// Shop
-const panel=document.getElementById("shopPanel");
-
+const panel=document.getElementById("panel");
 document.getElementById("shop").onclick=()=>{
- updateCoinDisplay();
- panel.style.display="block";
+ updateUI();panel.style.display="block";
+};
+document.getElementById("close").onclick=()=>panel.style.display="none";
+
+document.getElementById("flowerBuy").onclick=()=>{
+ if(flower){say("You already have the flower crown!");return;}
+ if(coins<5){say("Collect 5 coins first!");return;}
+ coins-=5;flower=true;updateUI();say("Flower crown purchased! 🌺");
+};
+document.getElementById("dressBuy").onclick=()=>{
+ if(royal){say("You already have the royal gown!");return;}
+ if(coins<10){say("Collect 10 coins first!");return;}
+ coins-=10;royal=true;updateUI();say("Royal gown purchased! 👗");
 };
 
-document.getElementById("close").onclick=()=>{
- panel.style.display="none";
-};
-
-document.getElementById("flower").onclick=()=>{
- if(player.flowers){
-  say("You already have the flower! 🌺");
- }else if(coins>=5){
-  coins-=5;
-  player.flowers=true;
-  updateCoinDisplay();
-  say("Beautiful flower accessory purchased! 🌺");
- }else{
-  say("You need 5 coins! 💰");
- }
-};
-
-document.getElementById("dress").onclick=()=>{
- if(player.royal){
-  say("You already have the royal dress! 👗");
- }else if(coins>=10){
-  coins-=10;
-  player.royal=true;
-  updateCoinDisplay();
-  say("Royal dress purchased! 👑");
- }else{
-  say("You need 10 coins! 💰");
- }
-};
-
-canvas.addEventListener("pointerdown",()=>{
- if(panel.style.display==="block")return;
- say("Explore your beautiful village! 🌸");
-});
-
-say("Welcome to Dream Village V14! 👑");
+updateUI();
+say("Welcome to Dream Village V15! 👑");
 loop();
 </script>
 </body>
