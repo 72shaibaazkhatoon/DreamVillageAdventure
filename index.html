@@ -4,236 +4,728 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Dream Village Adventure V13</title>
+<title>Dream Village Adventure V14</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;overflow:hidden;font-family:Arial;background:#83d9ff;touch-action:none}
 canvas{display:block;width:100vw;height:100vh}
-#hud{position:fixed;top:10px;left:10px;color:#fff;background:#7845a8;padding:10px 15px;border-radius:15px;font-weight:bold;box-shadow:0 3px 8px #555}
-#message{position:fixed;top:65px;left:50%;transform:translateX(-50%);background:#fff2b8;padding:8px 14px;border-radius:12px;font-weight:bold;color:#704323}
-#controls{position:fixed;bottom:18px;left:0;right:0;display:flex;justify-content:space-between;padding:0 22px;pointer-events:none}
-.pad{display:grid;grid-template-columns:55px 55px 55px;grid-template-rows:55px 55px;gap:5px;pointer-events:auto}
-.control{border:2px solid white;border-radius:15px;background:#9b62d9;color:white;font-size:25px;font-weight:bold;box-shadow:0 3px 6px #555;touch-action:none}
+#hud{
+ position:fixed;top:10px;left:10px;color:white;
+ background:#7845a8;padding:10px 14px;border-radius:15px;
+ font-weight:bold;box-shadow:0 3px 8px #555;z-index:3
+}
+#message{
+ position:fixed;top:65px;left:50%;transform:translateX(-50%);
+ background:#fff2b8;padding:9px 13px;border-radius:12px;
+ font-weight:bold;color:#704323;white-space:nowrap;
+ font-size:13px;z-index:3
+}
+#controls{
+ position:fixed;bottom:15px;left:0;right:0;
+ display:flex;justify-content:space-between;padding:0 15px;
+ pointer-events:none;z-index:3
+}
+.pad{display:grid;grid-template-columns:53px 53px 53px;
+grid-template-rows:53px 53px;gap:4px;pointer-events:auto}
+.control{
+ border:2px solid white;border-radius:15px;
+ background:#9b62d9;color:white;font-size:24px;
+ font-weight:bold;box-shadow:0 3px 6px #555;
+ touch-action:none;user-select:none
+}
 .control:active{background:#6332a3}
-#jump{width:70px;height:70px;border-radius:50%;align-self:end;background:#ff8bba}
-#shop{position:fixed;right:12px;top:12px;border:0;border-radius:12px;background:#ffbd45;padding:10px;font-weight:bold}
+#jump{width:70px;height:70px;border-radius:50%;
+align-self:end;background:#ff8bba;pointer-events:auto}
+#shop{
+ position:fixed;right:12px;top:12px;border:0;
+ border-radius:12px;background:#ffbd45;padding:11px;
+ font-weight:bold;z-index:4
+}
+#shopPanel{
+ display:none;position:fixed;z-index:10;left:50%;top:50%;
+ transform:translate(-50%,-50%);width:270px;
+ background:#fff4d7;border:4px solid #e6a64a;
+ border-radius:20px;padding:20px;text-align:center;
+ box-shadow:0 5px 30px #444
+}
+#shopPanel h2{color:#874ca5;margin:5px}
+.item{
+ display:block;width:100%;margin-top:12px;padding:12px;
+ border:0;border-radius:12px;background:#ffbc55;
+ font-weight:bold;font-size:15px
+}
+#close{background:#9b62d9;color:white}
 </style>
 </head>
 <body>
+
 <canvas id="game"></canvas>
-<div id="hud">💰 Coins: <span id="coins">0</span> | 👑 Princess</div>
-<div id="message">Welcome to Dream Village! 🌸</div>
-<button id="shop">🏡 Shop</button>
-<div id="controls">
-  <div class="pad">
-    <button class="control" style="grid-column:2" data-key="up">⬆</button>
-    <button class="control" style="grid-column:1;grid-row:2" data-key="left">⬅</button>
-    <button class="control" style="grid-column:2;grid-row:2" data-key="down">⬇</button>
-    <button class="control" style="grid-column:3;grid-row:2" data-key="right">➡</button>
-  </div>
-  <button class="control" id="jump">⬆</button>
+
+<div id="hud">
+💰 Coins: <span id="coins">0</span> |
+👑 Princess
 </div>
+
+<div id="message">Welcome to Dream Village V14! 🌸</div>
+
+<button id="shop">🏡 Shop</button>
+
+<div id="shopPanel">
+<h2>🌸 Village Shop</h2>
+<p>Welcome, Princess!</p>
+<p>Coins: <b id="shopCoins">0</b></p>
+<button class="item" id="flower">🌺 Buy flower accessory - 5 coins</button>
+<button class="item" id="dress">👗 Buy royal dress - 10 coins</button>
+<button class="item" id="close">Close</button>
+</div>
+
+<div id="controls">
+ <div class="pad">
+  <button class="control" style="grid-column:2" data-key="up">⬆</button>
+  <button class="control" style="grid-column:1;grid-row:2" data-key="left">⬅</button>
+  <button class="control" style="grid-column:2;grid-row:2" data-key="down">⬇</button>
+  <button class="control" style="grid-column:3;grid-row:2" data-key="right">➡</button>
+ </div>
+ <button class="control" id="jump">⬆</button>
+</div>
+
 <script>
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
-let W=innerWidth,H=innerHeight;
-function resize(){W=innerWidth;H=innerHeight;canvas.width=W*devicePixelRatio;canvas.height=H*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}
-resize();addEventListener("resize",resize);
+
+let W=innerWidth,H=innerHeight,DPR=1;
+
+function resize(){
+ W=innerWidth;
+ H=innerHeight;
+ DPR=Math.min(devicePixelRatio||1,2);
+ canvas.width=W*DPR;
+ canvas.height=H*DPR;
+ ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+resize();
+addEventListener("resize",resize);
 
 const world={w:2200,h:1500};
-const player={x:500,y:500,speed:3.2,dir:1,walk:0,jump:0};
-let camera={x:0,y:0};
-let coins=0;
-const keys={};
-let messageTimer=0;
 
-function say(t){document.getElementById("message").textContent=t;messageTimer=180}
-function rand(min,max){return Math.random()*(max-min)+min}
+const player={
+ x:500,y:500,speed:3.5,
+ dir:1,walk:0,jump:0,
+ flowers:false,royal:false
+};
+
+const camera={x:0,y:0};
+const keys={};
+let coins=0;
+let messageTimer=0;
+let frame=0;
+
+function say(t){
+ document.getElementById("message").textContent=t;
+ messageTimer=180;
+}
+
+function rand(a,b){return Math.random()*(b-a)+a}
+function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+
+function roundRect(x,y,w,h,r,color){
+ ctx.fillStyle=color;
+ ctx.beginPath();
+ ctx.roundRect(x,y,w,h,r);
+ ctx.fill();
+}
 
 const coinList=[];
-for(let i=0;i<35;i++)coinList.push({x:rand(120,world.w-120),y:rand(120,world.h-120),got:false});
+for(let i=0;i<45;i++){
+ coinList.push({
+  x:rand(120,world.w-120),
+  y:rand(120,world.h-120),
+  got:false,spin:rand(0,6)
+ });
+}
 
 const animals=[
- {x:330,y:300,type:"🐶"},{x:850,y:340,type:"🐰"},
- {x:1200,y:700,type:"🐑"},{x:1650,y:400,type:"🐥"},
- {x:600,y:1000,type:"🐱"},{x:1850,y:1100,type:"🐶"}
+ {x:330,y:300,type:"🐶",speed:0.7},
+ {x:850,y:340,type:"🐰",speed:0.8},
+ {x:1200,y:700,type:"🐑",speed:0.5},
+ {x:1650,y:400,type:"🐥",speed:0.9},
+ {x:600,y:1000,type:"🐱",speed:0.65},
+ {x:1850,y:1100,type:"🐄",speed:0.45}
 ];
 
-function rounded(x,y,w,h,r,color){
- ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();
+for(const a of animals){
+ a.angle=rand(0,Math.PI*2);
+ a.timer=rand(50,150);
+ a.walk=rand(0,6);
+ a.turn=1;
+}
+
+const houses=[
+ {x:180,y:180,c:"#e76e78"},
+ {x:1450,y:180,c:"#8c78d6"},
+ {x:300,y:1050,c:"#e8a443"},
+ {x:1510,y:1000,c:"#e76eaa"}
+];
+
+const trees=[];
+for(let i=0;i<35;i++){
+ trees.push({
+  x:120+(i*311)%1950,
+  y:100+(i*197)%1280
+ });
 }
 
 function drawGround(){
- ctx.fillStyle="#79cf70";ctx.fillRect(0,0,world.w,world.h);
- for(let x=0;x<world.w;x+=90)for(let y=0;y<world.h;y+=90){
-  ctx.fillStyle=(x/90+y/90)%2?"#80d775":"#76cb6c";
-  ctx.fillRect(x,y,90,90);
+ ctx.fillStyle="#79cf70";
+ ctx.fillRect(0,0,world.w,world.h);
+
+ for(let x=0;x<world.w;x+=90){
+  for(let y=0;y<world.h;y+=90){
+   ctx.fillStyle=(x/90+y/90)%2?"#80d775":"#76cb6c";
+   ctx.fillRect(x,y,90,90);
+  }
  }
- // Paths
+
+ // Village roads
  ctx.fillStyle="#e9cf91";
- ctx.fillRect(0,690,world.w,95);
- ctx.fillRect(1050,0,100,world.h);
+ ctx.fillRect(0,690,world.w,100);
+ ctx.fillRect(1050,0,105,world.h);
+
+ // Road decorations
+ for(let x=20;x<world.w;x+=90){
+  ctx.fillStyle="#d8b879";
+  ctx.beginPath();
+  ctx.arc(x,740,3,0,Math.PI*2);
+  ctx.fill();
+ }
+
  // Flowers
- for(let i=0;i<160;i++){
-  let x=(i*173)%world.w,y=(i*293)%world.h;
+ for(let i=0;i<200;i++){
+  let x=(i*173)%world.w;
+  let y=(i*293)%world.h;
+
   ctx.fillStyle=["#ff77b7","#fff4a3","#ffffff"][i%3];
-  ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x,y,3,0,Math.PI*2);
+  ctx.fill();
  }
 }
 
-function drawHouse(x,y,color){
- ctx.fillStyle="#a65d38";ctx.fillRect(x,y+45,145,110);
- ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(x-12,y+50);ctx.lineTo(x+72,y-15);ctx.lineTo(x+157,y+50);ctx.closePath();ctx.fill();
- ctx.fillStyle="#8be4ff";ctx.fillRect(x+18,y+75,35,35);ctx.fillRect(x+92,y+75,35,35);
- ctx.fillStyle="#75412c";ctx.fillRect(x+62,y+100,30,55);
- ctx.fillStyle="#ffdc80";ctx.beginPath();ctx.arc(x+85,y+125,3,0,7);ctx.fill();
+function drawHouse(h){
+ let x=h.x,y=h.y;
+
+ // Shadow
+ ctx.fillStyle="#456b3c44";
+ ctx.fillRect(x-8,y+145,160,12);
+
+ // Walls
+ roundRect(x,y+45,145,110,5,"#a65d38");
+
+ // Roof
+ ctx.fillStyle=h.c;
+ ctx.beginPath();
+ ctx.moveTo(x-15,y+50);
+ ctx.lineTo(x+72,y-20);
+ ctx.lineTo(x+160,y+50);
+ ctx.closePath();
+ ctx.fill();
+
+ // Roof decoration
+ ctx.strokeStyle="#ffffff77";
+ ctx.lineWidth=4;
+ ctx.beginPath();
+ ctx.moveTo(x+72,y-15);
+ ctx.lineTo(x+72,y+45);
+ ctx.stroke();
+
+ // Windows
+ roundRect(x+16,y+75,35,35,4,"#8be4ff");
+ roundRect(x+94,y+75,35,35,4,"#8be4ff");
+
+ ctx.strokeStyle="#ffffff";
+ ctx.lineWidth=3;
+ ctx.beginPath();
+ ctx.moveTo(x+33,y+75);
+ ctx.lineTo(x+33,y+110);
+ ctx.moveTo(x+16,y+92);
+ ctx.lineTo(x+51,y+92);
+ ctx.stroke();
+
+ // Door
+ roundRect(x+60,y+100,30,55,5,"#75412c");
+
+ ctx.fillStyle="#ffdc80";
+ ctx.beginPath();
+ ctx.arc(x+83,y+128,3,0,Math.PI*2);
+ ctx.fill();
+}
+
+function drawTree(t){
+ ctx.fillStyle="#79502e";
+ ctx.fillRect(t.x-8,t.y,16,40);
+
+ ctx.fillStyle="#168b43";
+ ctx.beginPath();
+ ctx.arc(t.x,t.y-5,29,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="#42b85b";
+ ctx.beginPath();
+ ctx.arc(t.x-12,t.y-17,16,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="#78dc71";
+ ctx.beginPath();
+ ctx.arc(t.x+12,t.y-13,12,0,Math.PI*2);
+ ctx.fill();
 }
 
 function drawFence(){
- ctx.lineWidth=8;ctx.strokeStyle="#9b6335";
+ ctx.strokeStyle="#9b6335";
+ ctx.lineWidth=9;
  ctx.strokeRect(40,40,world.w-80,world.h-80);
- ctx.lineWidth=3;ctx.strokeStyle="#e2b77b";
+
+ ctx.strokeStyle="#e2b77b";
+ ctx.lineWidth=3;
+
  for(let x=40;x<=world.w-40;x+=28){
-  ctx.beginPath();ctx.moveTo(x,40);ctx.lineTo(x,68);ctx.moveTo(x,world.h-40);ctx.lineTo(x,world.h-68);ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x,40);
+  ctx.lineTo(x,68);
+  ctx.moveTo(x,world.h-40);
+  ctx.lineTo(x,world.h-68);
+  ctx.stroke();
  }
+
  for(let y=40;y<=world.h-40;y+=28){
-  ctx.beginPath();ctx.moveTo(40,y);ctx.lineTo(68,y);ctx.moveTo(world.w-40,y);ctx.lineTo(world.w-68,y);ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(40,y);
+  ctx.lineTo(68,y);
+  ctx.moveTo(world.w-40,y);
+  ctx.lineTo(world.w-68,y);
+  ctx.stroke();
  }
 }
 
-function drawTree(x,y){
- ctx.fillStyle="#79502e";ctx.fillRect(x-8,y,16,40);
- ctx.fillStyle="#269b4c";ctx.beginPath();ctx.arc(x,y-5,29,0,7);ctx.fill();
- ctx.fillStyle="#55c96c";ctx.beginPath();ctx.arc(x-12,y-16,15,0,7);ctx.fill();
-}
-
+// Detailed animated princess
 function drawPrincess(){
- let x=player.x,y=player.y;
- let swing=Math.sin(player.walk)*5;
- ctx.save();ctx.translate(x,y);
+ let p=player;
+ let swing=Math.sin(p.walk)*6;
+ let bob=Math.abs(Math.sin(p.walk))*2;
+ let side=p.dir;
+
+ ctx.save();
+ ctx.translate(p.x,p.y-p.jump);
+ ctx.scale(side,1);
+
  // Shadow
- ctx.fillStyle="#397b3b55";ctx.beginPath();ctx.ellipse(0,29,23,8,0,0,7);ctx.fill();
- // Shoes and legs
- ctx.strokeStyle="#f5c29b";ctx.lineWidth=7;ctx.lineCap="round";
- ctx.beginPath();ctx.moveTo(-7,12);ctx.lineTo(-8+swing,27+player.jump);
- ctx.moveTo(7,12);ctx.lineTo(8-swing,27+player.jump);ctx.stroke();
- ctx.fillStyle="#ff70b0";
- ctx.beginPath();ctx.ellipse(-9+swing,28+player.jump,8,5,0,0,7);ctx.fill();
- ctx.beginPath();ctx.ellipse(9-swing,28+player.jump,8,5,0,0,7);ctx.fill();
+ ctx.fillStyle="#345d3155";
+ ctx.beginPath();
+ ctx.ellipse(0,31+p.jump,23,7,0,0,Math.PI*2);
+ ctx.fill();
+
+ // Back hair
+ ctx.fillStyle="#46252a";
+ ctx.beginPath();
+ ctx.ellipse(-1,-20,19,27,0,0,Math.PI*2);
+ ctx.fill();
+
+ // Hair strands
+ ctx.fillStyle="#24151d";
+ ctx.beginPath();
+ ctx.moveTo(-17,-33);
+ ctx.quadraticCurveTo(-27,-5,-15,12);
+ ctx.lineTo(-9,9);
+ ctx.lineTo(-11,-25);
+ ctx.fill();
+
+ // Legs
+ ctx.strokeStyle="#f5bd91";
+ ctx.lineWidth=7;
+ ctx.lineCap="round";
+
+ ctx.beginPath();
+ ctx.moveTo(-7,11+bob);
+ ctx.lineTo(-8+swing,26+bob);
+ ctx.moveTo(7,11+bob);
+ ctx.lineTo(8-swing,26+bob);
+ ctx.stroke();
+
+ // Shoes
+ ctx.fillStyle="#e94c91";
+ ctx.beginPath();
+ ctx.ellipse(-10+swing,28+bob,9,5,0,0,Math.PI*2);
+ ctx.ellipse(10-swing,28+bob,9,5,0,0,Math.PI*2);
+ ctx.fill();
+
  // Dress
- ctx.fillStyle="#ed82cf";ctx.beginPath();
- ctx.moveTo(-9,-15);ctx.lineTo(-24,16);ctx.quadraticCurveTo(0,26,24,16);
- ctx.lineTo(9,-15);ctx.closePath();ctx.fill();
- ctx.fillStyle="#ffb5e7";ctx.beginPath();ctx.moveTo(0,-13);ctx.lineTo(-5,17);ctx.lineTo(5,17);ctx.closePath();ctx.fill();
+ let dressColor=p.royal?"#9b64e9":"#ed82cf";
+ ctx.fillStyle=dressColor;
+ ctx.beginPath();
+ ctx.moveTo(-10,-17+bob);
+ ctx.quadraticCurveTo(-15,-3,-26,17);
+ ctx.quadraticCurveTo(0,29,26,17);
+ ctx.quadraticCurveTo(15,-3,10,-17+bob);
+ ctx.closePath();
+ ctx.fill();
+
+ // Dress decoration
+ ctx.strokeStyle="#ffe5f5";
+ ctx.lineWidth=2;
+ ctx.beginPath();
+ ctx.moveTo(0,-12);
+ ctx.lineTo(0,20);
+ ctx.stroke();
+
+ ctx.fillStyle="#ffdaef";
+ ctx.beginPath();
+ ctx.arc(0,5,3,0,Math.PI*2);
+ ctx.fill();
+
+ // Backpack
+ roundRect(-21,-13,9,19,4,"#f2a34a");
+ ctx.fillStyle="#ffdf91";
+ ctx.beginPath();
+ ctx.arc(-17,-8,2,0,Math.PI*2);
+ ctx.fill();
+
  // Arms
- ctx.strokeStyle="#f5c29b";ctx.lineWidth=6;
- ctx.beginPath();ctx.moveTo(-10,-10);ctx.lineTo(-20+swing,-1);
- ctx.moveTo(10,-10);ctx.lineTo(20-swing,-1);ctx.stroke();
- // Hair behind head
- ctx.fillStyle="#17101e";
- ctx.beginPath();ctx.ellipse(0,-26,19,23,0,0,7);ctx.fill();
- ctx.fillRect(-17,-28,34,42);
+ let armSwing=Math.sin(p.walk)*7;
+
+ ctx.strokeStyle="#f5bd91";
+ ctx.lineWidth=6;
+ ctx.beginPath();
+ ctx.moveTo(-10,-10+bob);
+ ctx.lineTo(-18+armSwing,-1+bob);
+ ctx.moveTo(10,-10+bob);
+ ctx.lineTo(18-armSwing,-1+bob);
+ ctx.stroke();
+
+ // Hands
+ ctx.fillStyle="#f5bd91";
+ ctx.beginPath();
+ ctx.arc(-18+armSwing,-1+bob,4,0,Math.PI*2);
+ ctx.arc(18-armSwing,-1+bob,4,0,Math.PI*2);
+ ctx.fill();
+
+ // Neck
+ roundRect(-5,-23+bob,10,12,4,"#f5bd91");
+
  // Face
- ctx.fillStyle="#f5c29b";ctx.beginPath();ctx.ellipse(0,-29,14,17,0,0,7);ctx.fill();
- // Hair fringe
- ctx.fillStyle="#17101e";ctx.beginPath();
- ctx.arc(0,-37,15,Math.PI,Math.PI*2);ctx.lineTo(14,-30);
- ctx.quadraticCurveTo(5,-39,-2,-32);ctx.quadraticCurveTo(-8,-25,-14,-31);ctx.closePath();ctx.fill();
+ ctx.fillStyle="#f5bd91";
+ ctx.beginPath();
+ ctx.ellipse(0,-32+bob,15,18,0,0,Math.PI*2);
+ ctx.fill();
+
+ // Hair cap
+ ctx.fillStyle="#24151d";
+ ctx.beginPath();
+ ctx.moveTo(-15,-33+bob);
+ ctx.quadraticCurveTo(-20,-58+bob,0,-55+bob);
+ ctx.quadraticCurveTo(19,-56+bob,15,-33+bob);
+ ctx.quadraticCurveTo(5,-43+bob,-2,-37+bob);
+ ctx.quadraticCurveTo(-9,-29+bob,-15,-33+bob);
+ ctx.fill();
+
+ // Side hair
+ ctx.fillStyle="#46252a";
+ ctx.beginPath();
+ ctx.ellipse(13,-31+bob,6,17,0,0,Math.PI*2);
+ ctx.fill();
+
  // Eyes
- ctx.fillStyle="#fff";ctx.beginPath();ctx.ellipse(-5,-29,3.5,4.5,0,0,7);ctx.ellipse(5,-29,3.5,4.5,0,0,7);ctx.fill();
- ctx.fillStyle="#5b3425";ctx.beginPath();ctx.arc(-5,-29,2,0,7);ctx.arc(5,-29,2,0,7);ctx.fill();
+ ctx.fillStyle="#fff";
+ ctx.beginPath();
+ ctx.ellipse(-5,-32+bob,3.5,4.5,0,0,Math.PI*2);
+ ctx.ellipse(5,-32+bob,3.5,4.5,0,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="#4a3029";
+ ctx.beginPath();
+ ctx.arc(-5,-32+bob,2,0,Math.PI*2);
+ ctx.arc(5,-32+bob,2,0,Math.PI*2);
+ ctx.fill();
+
  // Smile
- ctx.strokeStyle="#a84d5e";ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,-23,4,0.2,2.9);ctx.stroke();
+ ctx.strokeStyle="#a84d5e";
+ ctx.lineWidth=1.5;
+ ctx.beginPath();
+ ctx.arc(0,-26+bob,4,0.2,2.9);
+ ctx.stroke();
+
  // Crown
- ctx.fillStyle="#ffd83d";ctx.beginPath();
- ctx.moveTo(-12,-45);ctx.lineTo(-10,-57);ctx.lineTo(-3,-50);
- ctx.lineTo(0,-61);ctx.lineTo(4,-50);ctx.lineTo(11,-57);
- ctx.lineTo(12,-45);ctx.closePath();ctx.fill();
- ctx.fillStyle="#ff5c9c";ctx.beginPath();ctx.arc(0,-54,2,0,7);ctx.fill();
+ ctx.fillStyle="#ffd83d";
+ ctx.beginPath();
+ ctx.moveTo(-12,-48+bob);
+ ctx.lineTo(-11,-59+bob);
+ ctx.lineTo(-4,-52+bob);
+ ctx.lineTo(0,-64+bob);
+ ctx.lineTo(5,-52+bob);
+ ctx.lineTo(12,-59+bob);
+ ctx.lineTo(12,-48+bob);
+ ctx.closePath();
+ ctx.fill();
+
+ ctx.fillStyle="#ff5c9c";
+ ctx.beginPath();
+ ctx.arc(0,-56+bob,2.5,0,Math.PI*2);
+ ctx.fill();
+
+ // Flower accessory
+ if(p.flowers){
+  ctx.fillStyle="#ff70b4";
+  for(let i=0;i<5;i++){
+   let a=i*Math.PI*2/5;
+   ctx.beginPath();
+   ctx.arc(-10+Math.cos(a)*5,-48+Math.sin(a)*5+bob,3,0,Math.PI*2);
+   ctx.fill();
+  }
+  ctx.fillStyle="#ffd83d";
+  ctx.beginPath();
+  ctx.arc(-10,-48+bob,2,0,Math.PI*2);
+  ctx.fill();
+ }
+
  ctx.restore();
 }
 
 function drawCoin(c){
  if(c.got)return;
- ctx.fillStyle="#ffd329";ctx.beginPath();ctx.arc(c.x,c.y,10,0,7);ctx.fill();
- ctx.strokeStyle="#fff4a0";ctx.lineWidth=3;ctx.stroke();
- ctx.fillStyle="#b47a00";ctx.font="bold 12px Arial";ctx.fillText("$",c.x-4,c.y+4);
+
+ let pulse=1+Math.sin(frame*0.08+c.spin)*0.15;
+
+ ctx.save();
+ ctx.translate(c.x,c.y);
+ ctx.scale(pulse,1);
+
+ ctx.fillStyle="#ffd329";
+ ctx.beginPath();
+ ctx.arc(0,0,10,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.strokeStyle="#fff4a0";
+ ctx.lineWidth=3;
+ ctx.stroke();
+
+ ctx.fillStyle="#b47a00";
+ ctx.font="bold 12px Arial";
+ ctx.textAlign="center";
+ ctx.fillText("$",0,4);
+
+ ctx.restore();
+}
+
+// Animals wander around the village
+function updateAnimals(){
+ for(const a of animals){
+  a.timer--;
+
+  if(a.timer<=0){
+   a.angle=rand(0,Math.PI*2);
+   a.timer=rand(70,180);
+  }
+
+  let nx=a.x+Math.cos(a.angle)*a.speed;
+  let ny=a.y+Math.sin(a.angle)*a.speed;
+
+  if(nx<90||nx>world.w-90||ny<90||ny>world.h-90){
+   a.angle+=Math.PI;
+  }else{
+   a.x=nx;
+   a.y=ny;
+  }
+
+  a.turn=Math.cos(a.angle)>=0?1:-1;
+  a.walk+=0.15;
+ }
 }
 
 function drawAnimal(a){
- ctx.font="30px Arial";ctx.textAlign="center";ctx.fillText(a.type,a.x,a.y);
+ ctx.save();
+ ctx.translate(a.x,a.y);
+ ctx.scale(a.turn,1);
+
+ let bounce=Math.abs(Math.sin(a.walk))*3;
+
+ // Ground shadow
+ ctx.fillStyle="#345d3155";
+ ctx.beginPath();
+ ctx.ellipse(0,7,16,5,0,0,Math.PI*2);
+ ctx.fill();
+
+ // Animal movement
+ ctx.translate(0,-bounce);
+ ctx.font="34px Arial";
+ ctx.textAlign="center";
+ ctx.textBaseline="middle";
+ ctx.fillText(a.type,0,0);
+
+ ctx.restore();
 }
 
 function draw(){
  ctx.clearRect(0,0,W,H);
- ctx.save();ctx.translate(-camera.x,-camera.y);
+ ctx.save();
+ ctx.translate(-camera.x,-camera.y);
+
  drawGround();
- drawHouse(180,180,"#e76e78");
- drawHouse(1450,180,"#8c78d6");
- drawHouse(300,1050,"#e8a443");
- drawHouse(1510,1000,"#e76eaa");
- for(let i=0;i<25;i++)drawTree(120+(i*311)%1950,100+(i*197)%1280);
+
+ for(const h of houses)drawHouse(h);
+ for(const t of trees)drawTree(t);
  for(const c of coinList)drawCoin(c);
+
+ // Draw animals and princess
  for(const a of animals)drawAnimal(a);
+
  drawPrincess();
  drawFence();
+
  ctx.restore();
 }
 
 function update(){
+ frame++;
+
  let dx=0,dy=0;
+
  if(keys.left||keys.a)dx--;
  if(keys.right||keys.d)dx++;
  if(keys.up||keys.w)dy--;
  if(keys.down||keys.s)dy++;
+
  if(dx||dy){
-  let length=Math.hypot(dx,dy);
-  dx=dx/length*player.speed;dy=dy/length*player.speed;
+  let len=Math.hypot(dx,dy);
+  dx=dx/len*player.speed;
+  dy=dy/len*player.speed;
+
   player.walk+=0.22;
+
   if(dx)player.dir=Math.sign(dx);
+ }else{
+  player.walk*=0.85;
  }
- let nx=player.x+dx,ny=player.y+dy;
- // Fence collision
- if(nx>65&&nx<world.w-65)player.x=nx;
- if(ny>65&&ny<world.h-65)player.y=ny;
+
+ let nx=player.x+dx;
+ let ny=player.y+dy;
+
+ // Strong village boundaries
+ if(nx>75&&nx<world.w-75)player.x=nx;
+ if(ny>75&&ny<world.h-75)player.y=ny;
+
+ // Jump
  if(player.jump>0)player.jump=Math.max(0,player.jump-1);
- // Camera follows near screen edges
- let margin=100;
- if(player.x-camera.x>W-margin)camera.x=player.x-W+margin;
- if(player.x-camera.x<margin)camera.x=player.x-margin;
- if(player.y-camera.y>H-margin)camera.y=player.y-H+margin;
- if(player.y-camera.y<margin)camera.y=player.y-margin;
+
+ // Camera
+ camera.x=player.x-W/2;
+ camera.y=player.y-H/2;
+
  camera.x=Math.max(0,Math.min(world.w-W,camera.x));
  camera.y=Math.max(0,Math.min(world.h-H,camera.y));
+
+ // Collect coins
  for(const c of coinList){
   if(!c.got&&Math.hypot(player.x-c.x,player.y-c.y)<28){
-   c.got=true;coins++;document.getElementById("coins").textContent=coins;
+   c.got=true;
+   coins++;
+   updateCoinDisplay();
    say("You found a golden coin! ✨");
   }
  }
+
+ updateAnimals();
+}
+
+function updateCoinDisplay(){
+ document.getElementById("coins").textContent=coins;
+ document.getElementById("shopCoins").textContent=coins;
 }
 
 function loop(){
- update();draw();
+ update();
+ draw();
+
  if(messageTimer>0)messageTimer--;
+
  requestAnimationFrame(loop);
 }
 
+// Mobile controls
 document.querySelectorAll("[data-key]").forEach(btn=>{
  const k=btn.dataset.key;
- btn.addEventListener("pointerdown",e=>{e.preventDefault();keys[k]=true});
- ["pointerup","pointerleave","pointercancel"].forEach(ev=>btn.addEventListener(ev,()=>keys[k]=false));
+
+ btn.addEventListener("pointerdown",e=>{
+  e.preventDefault();
+  keys[k]=true;
+  btn.setPointerCapture(e.pointerId);
+ });
+
+ function release(){
+  keys[k]=false;
+ }
+
+ btn.addEventListener("pointerup",release);
+ btn.addEventListener("pointercancel",release);
+ btn.addEventListener("lostpointercapture",release);
 });
-addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true});
-addEventListener("keyup",e=>{keys[e.key.toLowerCase()]=false});
+
+addEventListener("keydown",e=>{
+ keys[e.key.toLowerCase()]=true;
+});
+
+addEventListener("keyup",e=>{
+ keys[e.key.toLowerCase()]=false;
+});
+
 document.getElementById("jump").addEventListener("pointerdown",e=>{
- e.preventDefault();player.jump=18;say("Princess is jumping! 🌟");
+ e.preventDefault();
+ player.jump=18;
+ say("Princess is jumping! 🌟");
 });
-document.getElementById("shop").onclick=()=>say("Welcome to the village shop! 🏡 More items coming soon!");
-canvas.addEventListener("pointerdown",e=>{
- if(e.target===canvas)say("Explore the village and collect golden coins! 💛");
+
+// Shop
+const panel=document.getElementById("shopPanel");
+
+document.getElementById("shop").onclick=()=>{
+ updateCoinDisplay();
+ panel.style.display="block";
+};
+
+document.getElementById("close").onclick=()=>{
+ panel.style.display="none";
+};
+
+document.getElementById("flower").onclick=()=>{
+ if(player.flowers){
+  say("You already have the flower! 🌺");
+ }else if(coins>=5){
+  coins-=5;
+  player.flowers=true;
+  updateCoinDisplay();
+  say("Beautiful flower accessory purchased! 🌺");
+ }else{
+  say("You need 5 coins! 💰");
+ }
+};
+
+document.getElementById("dress").onclick=()=>{
+ if(player.royal){
+  say("You already have the royal dress! 👗");
+ }else if(coins>=10){
+  coins-=10;
+  player.royal=true;
+  updateCoinDisplay();
+  say("Royal dress purchased! 👑");
+ }else{
+  say("You need 10 coins! 💰");
+ }
+};
+
+canvas.addEventListener("pointerdown",()=>{
+ if(panel.style.display==="block")return;
+ say("Explore your beautiful village! 🌸");
 });
-say("Welcome to Dream Village V13! 👑");
+
+say("Welcome to Dream Village V14! 👑");
 loop();
 </script>
 </body>
