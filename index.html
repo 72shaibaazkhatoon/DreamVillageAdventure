@@ -4,726 +4,492 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Dream Village Adventure V15</title>
+<title>Dream Village Adventure V16</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;background:#8bd6ff;touch-action:none}
-canvas{display:block;width:100%;height:100%}
-#hud{position:fixed;top:10px;left:10px;z-index:4;background:#55377deF;color:white;border:2px solid #ffe3a0;border-radius:18px;padding:10px 14px;font-weight:bold;box-shadow:0 4px 12px #263b4566}
-#message{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:4;background:#fff0b9;color:#68432c;border:2px solid white;border-radius:18px;padding:9px 13px;font-weight:bold;font-size:13px;max-width:58%;text-align:center}
-#shop{position:fixed;right:12px;top:12px;z-index:5;border:2px solid white;border-radius:16px;background:linear-gradient(#ffe49b,#f7a947);padding:12px 17px;font-size:17px;font-weight:bold;color:#704020;box-shadow:0 4px 10px #3335}
-#controls{position:fixed;bottom:15px;left:0;right:0;z-index:4;display:flex;justify-content:space-between;align-items:end;padding:0 18px;pointer-events:none}
-.pad{display:grid;grid-template-columns:54px 54px 54px;grid-template-rows:54px 54px;gap:4px;pointer-events:auto}
-.control{border:2px solid #fff9;border-radius:17px;background:#7653b9dd;color:white;font-size:25px;font-weight:bold;box-shadow:0 4px 8px #2226;touch-action:none;user-select:none}
-.control:active{background:#48317e}
-#jump{width:76px;height:76px;border-radius:50%;background:#e96eaa;font-size:15px}
-#panel{display:none;position:fixed;z-index:10;left:50%;top:50%;transform:translate(-50%,-50%);width:min(310px,90vw);padding:20px;background:#fff4dc;border:4px solid #d99b4b;border-radius:23px;text-align:center;box-shadow:0 8px 35px #2228;color:#70462c}
-#panel h2{margin:0 0 8px;color:#854b9e}
-.item{display:block;width:100%;padding:13px;margin-top:10px;border:0;border-radius:13px;background:#ffc66c;font-size:15px;font-weight:bold;color:#67401f}
-#close{background:#9871c8;color:white}
-#hint{position:fixed;bottom:5px;left:50%;transform:translateX(-50%);font-size:10px;color:white;text-shadow:0 1px 3px #333;z-index:2;pointer-events:none}
+body{margin:0;overflow:hidden;background:#9bd9ff;font-family:Arial;touch-action:none}
+canvas{display:block}
+#hud{position:fixed;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;z-index:5;pointer-events:none;gap:8px}
+.panel{background:#ffffffdf;color:#49351f;border-radius:14px;padding:10px;font-weight:bold;font-size:13px;box-shadow:0 3px 12px #0002}
+#message{position:fixed;top:65px;left:50%;transform:translateX(-50%);background:white;color:#65411e;padding:10px 16px;border-radius:20px;font-weight:bold;z-index:6;white-space:nowrap}
+#controls{position:fixed;bottom:22px;left:18px;display:grid;grid-template-columns:55px 55px 55px;grid-template-rows:55px 55px;gap:5px;z-index:8}
+.ctrl{border:2px solid white;background:#ffffffc9;border-radius:15px;font-size:25px;color:#553a2a;font-weight:bold;touch-action:none}
+#up{grid-column:2}
+#left{grid-column:1;grid-row:2}
+#down{grid-column:2;grid-row:2}
+#right{grid-column:3;grid-row:2}
+#shop{position:fixed;bottom:28px;right:18px;padding:14px 18px;border:0;border-radius:18px;background:#ffcf59;color:#563714;font-weight:bold;font-size:16px;z-index:8}
+#hint{position:fixed;bottom:5px;left:50%;transform:translateX(-50%);color:white;text-shadow:0 2px 4px #333;font-size:11px;white-space:nowrap}
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
 
-<div id="hud">💰 <span id="coins">0</span> &nbsp; 👑 Princess</div>
-<div id="message">Welcome to Dream Village! 🌸</div>
-<button id="shop">🏡 Shop</button>
+<div id="hud">
+ <div class="panel">🌸 DREAM VILLAGE V16</div>
+ <div class="panel">🪙 <span id="coins">0</span></div>
+</div>
+
+<div id="message">Welcome to your 3D village!</div>
 
 <div id="controls">
- <div class="pad">
-  <button class="control" style="grid-column:2" data-key="up">▲</button>
-  <button class="control" style="grid-column:1;grid-row:2" data-key="left">◀</button>
-  <button class="control" style="grid-column:2;grid-row:2" data-key="down">▼</button>
-  <button class="control" style="grid-column:3;grid-row:2" data-key="right">▶</button>
- </div>
- <button class="control" id="jump">JUMP</button>
-</div>
-<div id="hint">Use arrows to explore your village</div>
-
-<div id="panel">
- <h2>🌸 Village Shop</h2>
- <p>Welcome, Princess!</p>
- <p>💰 Coins: <b id="shopCoins">0</b></p>
- <button class="item" id="flowerBuy">🌺 Flower crown — 5 coins</button>
- <button class="item" id="dressBuy">👗 Royal gown — 10 coins</button>
- <button class="item" id="close">Close shop</button>
+ <button class="ctrl" id="up">▲</button>
+ <button class="ctrl" id="left">◀</button>
+ <button class="ctrl" id="down">▼</button>
+ <button class="ctrl" id="right">▶</button>
 </div>
 
-<script>
-"use strict";
+<button id="shop">🛍️ SHOP</button>
+<div id="hint">Use arrows or keyboard WASD to explore</div>
 
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-let W=innerWidth,H=innerHeight,DPR=1;
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
+</script>
 
-function resize(){
- W=innerWidth;H=innerHeight;
- DPR=Math.min(devicePixelRatio||1,2);
- canvas.width=Math.round(W*DPR);
- canvas.height=Math.round(H*DPR);
- ctx.setTransform(DPR,0,0,DPR,0,0);
-}
-addEventListener("resize",resize);
-resize();
+<script type="module">
+import * as THREE from 'three';
 
-const WORLD={w:2600,h:1900};
-const camera={x:0,y:0};
-const keys={};
-let frame=0;
-let coins=Number(localStorage.getItem("dv15coins")||0);
-let flower=localStorage.getItem("dv15flower")==="yes";
-let royal=localStorage.getItem("dv15royal")==="yes";
-let messageTime=0;
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x9bd9ff);
+scene.fog=new THREE.Fog(0x9bd9ff,45,100);
 
-const player={
- x:520,y:560,dir:1,walk:0,jump:0,
- speed:3.5,moving:false
-};
+const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.1,200);
+camera.position.set(0,9,13);
 
-function say(s){
- document.getElementById("message").textContent=s;
- messageTime=180;
-}
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.2;
+document.body.appendChild(renderer.domElement);
 
-function rand(a,b){return a+Math.random()*(b-a)}
-function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
-function dist(x,y,a,b){return Math.hypot(x-a,y-b)}
+scene.add(new THREE.HemisphereLight(0xffffff,0x71854a,2));
 
-function ellipse(x,y,rx,ry,color){
- ctx.fillStyle=color;
- ctx.beginPath();
- ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
- ctx.fill();
+const sun=new THREE.DirectionalLight(0xfff1d5,3);
+sun.position.set(-12,20,10);
+sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left=-35;
+sun.shadow.camera.right=35;
+sun.shadow.camera.top=35;
+sun.shadow.camera.bottom=-35;
+scene.add(sun);
+
+function material(color,roughness=.85){
+ return new THREE.MeshStandardMaterial({color,roughness});
 }
 
-function poly(points,color){
- ctx.fillStyle=color;
- ctx.beginPath();
- ctx.moveTo(points[0][0],points[0][1]);
- for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);
- ctx.closePath();
- ctx.fill();
+const grass=material(0x6eae52);
+const earth=material(0xb98b59);
+const wood=material(0x80502d);
+const white=material(0xffffff);
+
+function make(geometry,mat,parent,x=0,y=0,z=0){
+ const m=new THREE.Mesh(geometry,mat);
+ m.position.set(x,y,z);
+ m.castShadow=true;
+ m.receiveShadow=true;
+ parent.add(m);
+ return m;
 }
 
-function line(x1,y1,x2,y2,color,width=2){
- ctx.strokeStyle=color;ctx.lineWidth=width;
- ctx.lineCap="round";
- ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+function block(parent,x,y,z,sx,sy,sz,color){
+ return make(new THREE.BoxGeometry(sx,sy,sz),material(color),parent,x,y,z);
 }
 
-function rounded(x,y,w,h,r,color){
- ctx.fillStyle=color;
- ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();
+function ball(parent,x,y,z,sx,sy,sz,mat){
+ const m=make(new THREE.SphereGeometry(1,20,16),mat,parent,x,y,z);
+ m.scale.set(sx,sy,sz);
+ return m;
 }
 
-function updateUI(){
- document.getElementById("coins").textContent=coins;
- document.getElementById("shopCoins").textContent=coins;
- localStorage.setItem("dv15coins",coins);
- localStorage.setItem("dv15flower",flower?"yes":"no");
- localStorage.setItem("dv15royal",royal?"yes":"no");
+// Ground
+const ground=make(new THREE.PlaneGeometry(100,100),grass,scene);
+ground.rotation.x=-Math.PI/2;
+
+// Village roads
+function path(x,z,w,d){
+ make(new THREE.BoxGeometry(w,.04,d),earth,scene,x,.02,z);
+}
+path(0,0,5,55);
+path(0,0,55,4);
+path(-13,0,4,25);
+path(13,0,4,25);
+
+// Village boundary
+for(let i=-25;i<=25;i+=2.5){
+ for(const z of [-24,24]){
+  block(scene,i,.65,z,.13,1.3,.13,0x9b693d);
+  block(scene,i,.9,z,2.5,.13,.12,0xe5c18b);
+ }
+ for(const x of [-25,25]){
+  block(scene,x,.65,i,.13,1.3,.13,0x9b693d);
+  block(scene,x,.9,i,.12,.13,2.5,0xe5c18b);
+ }
 }
 
-// Deterministic scenery
-let rng=13579;
-function seeded(){
- rng=(rng*1664525+1013904223)>>>0;
- return rng/4294967296;
+// Houses
+function house(x,z,wallColor,roofColor){
+ const g=new THREE.Group();
+ scene.add(g);
+ g.position.set(x,0,z);
+
+ block(g,0,1.3,0,4,2.6,3.5,wallColor);
+
+ const roof=make(
+  new THREE.ConeGeometry(3.15,2.1,4),
+  material(roofColor),g,0,3.25,0
+ );
+ roof.rotation.y=Math.PI/4;
+
+ block(g,0,.85,1.79,.95,1.7,.12,0x70401f);
+ block(g,-1.15,1.7,1.81,.8,.8,.12,0x9ed8ed);
+ block(g,1.15,1.7,1.81,.8,.8,.12,0x9ed8ed);
+ block(g,0,.1,2.15,1.5,.18,.9,0x997047);
 }
 
-const flowers=[];
-for(let i=0;i<440;i++){
- flowers.push({
-  x:80+seeded()*(WORLD.w-160),
-  y:80+seeded()*(WORLD.h-160),
-  c:["#fff0a0","#ff9acb","#fff","#dca9ff","#ffbd75"][i%5],
-  size:1.5+seeded()*2
- });
+house(-9,-9,0xffd9a0,0xb94f45);
+house(9,-9,0xf5c4cf,0x7748a6);
+house(-10,10,0xe9d1a4,0x507cba);
+house(10,10,0xf2dda9,0xa84f3c);
+
+// Trees
+function tree(x,z,s=1){
+ const g=new THREE.Group();
+ scene.add(g);
+ g.position.set(x,0,z);
+
+ make(new THREE.CylinderGeometry(.22*s,.35*s,2*s,9),wood,g,0,s,0);
+
+ ball(g,0,2.4*s,0,1.35*s,1.35*s,1.35*s,material(0x398e46));
+ ball(g,.65*s,2.2*s,.15*s,.9*s,.9*s,.9*s,material(0x58aa50));
 }
 
-const trees=[];
-for(let i=0;i<85;i++){
- trees.push({
-  x:100+seeded()*(WORLD.w-200),
-  y:100+seeded()*(WORLD.h-200),
-  s:.75+seeded()*.65
- });
+for(let i=0;i<32;i++){
+ const x=(Math.random()-.5)*43;
+ const z=(Math.random()-.5)*43;
+ if(Math.abs(x)<7||Math.abs(z)<7)continue;
+ tree(x,z,.7+Math.random()*.6);
 }
 
-const houses=[
- {x:190,y:180,c:"#bd654c",roof:"#a83f3c"},
- {x:880,y:140,c:"#d39a60",roof:"#7651a1"},
- {x:1610,y:210,c:"#d18a56",roof:"#a94349"},
- {x:2050,y:720,c:"#c17a52",roof:"#7651a1"},
- {x:280,y:1280,c:"#d6a16a",roof:"#a84d4c"},
- {x:1500,y:1350,c:"#cf8b62",roof:"#a84d9d"}
-];
-
-const coinsList=[];
+// Flowers
 for(let i=0;i<55;i++){
- coinsList.push({
-  x:180+seeded()*(WORLD.w-360),
-  y:180+seeded()*(WORLD.h-360),
-  got:false,phase:seeded()*6
- });
+ const x=(Math.random()-.5)*42;
+ const z=(Math.random()-.5)*42;
+ if(Math.abs(x)<4||Math.abs(z)<4)continue;
+
+ const g=new THREE.Group();
+ scene.add(g);
+ g.position.set(x,.08,z);
+
+ make(new THREE.CylinderGeometry(.025,.035,.3,5),material(0x277a37),g,0,.15,0);
+ ball(g,0,.32,0,.13,.13,.13,material([0xffa3cf,0xffe36d,0xffffff][i%3]));
 }
 
-const animals=[
- {x:370,y:430,type:"cow",speed:.38,angle:1},
- {x:1050,y:430,type:"sheep",speed:.45,angle:2},
- {x:1390,y:800,type:"rabbit",speed:.65,angle:3},
- {x:1870,y:550,type:"chicken",speed:.7,angle:4},
- {x:620,y:1450,type:"sheep",speed:.4,angle:1.5},
- {x:2110,y:1290,type:"cow",speed:.35,angle:5},
- {x:1150,y:1450,type:"rabbit",speed:.6,angle:2.5}
-];
-animals.forEach(a=>{
- a.timer=rand(60,180);
- a.walk=rand(0,6);
- a.bob=rand(0,6);
-});
+// Princess character
+const princess=new THREE.Group();
+scene.add(princess);
 
-// Ground and paths
-function drawGround(){
- let g=ctx.createLinearGradient(0,0,0,WORLD.h);
- g.addColorStop(0,"#83cf76");
- g.addColorStop(1,"#5eae62");
- ctx.fillStyle=g;
- ctx.fillRect(0,0,WORLD.w,WORLD.h);
+const skin=material(0xf2bd91);
+const hair=material(0x5b2e24);
+const dress=material(0xe65c9a);
+const dressLight=material(0xff9bc7);
+const shoes=material(0x7440a0);
+const eye=material(0x302027);
+const gold=material(0xffd65b);
 
- // Subtle grass texture
- for(let i=0;i<700;i++){
-  let x=(i*173)%WORLD.w;
-  let y=(i*293)%WORLD.h;
-  ctx.strokeStyle=i%2?"#a6e18a55":"#367f4855";
-  ctx.lineWidth=1;
-  ctx.beginPath();
-  ctx.moveTo(x,y);ctx.lineTo(x+3,y-5);ctx.stroke();
+ball(princess,0,1.12,0,.39,.55,.25,dress);
+
+const skirt=make(
+ new THREE.ConeGeometry(.85,1.05,24),
+ dressLight,princess,0,.55,0
+);
+skirt.rotation.x=Math.PI;
+
+ball(princess,0,1.72,0,.24,.25,.22,skin);
+ball(princess,0,2.12,0,.43,.48,.4,skin);
+
+ball(princess,0,2.42,-.12,.46,.35,.43,hair);
+ball(princess,-.36,2.12,0,.15,.42,.19,hair);
+ball(princess,.36,2.12,0,.15,.42,.19,hair);
+
+ball(princess,-.15,2.17,.365,.045,.065,.035,eye);
+ball(princess,.15,2.17,.365,.045,.065,.035,eye);
+ball(princess,-.15,2.19,.395,.014,.02,.012,white);
+ball(princess,.15,2.19,.395,.014,.02,.012,white);
+ball(princess,0,2.02,.4,.07,.035,.025,material(0xd97975));
+
+// Crown
+make(new THREE.CylinderGeometry(.25,.32,.16,5),gold,princess,0,2.57,0);
+for(let i=-1;i<=1;i++){
+ ball(princess,i*.16,2.69,.02,.075,.075,.075,material(0xff6a9e));
+}
+ball(princess,0,2.65,-.24,.24,.23,.25,hair);
+
+// Moving arms and legs
+function limb(parent,length,radius,mat){
+ const pivot=new THREE.Group();
+ parent.add(pivot);
+
+ make(
+  new THREE.CylinderGeometry(radius*.8,radius,length,12),
+  mat,pivot,0,-length/2,0
+ );
+
+ ball(pivot,0,-length,0,radius,radius,radius,mat);
+ return pivot;
+}
+
+const leftArm=limb(princess,.62,.12,skin);
+leftArm.position.set(-.43,1.52,0);
+
+const rightArm=limb(princess,.62,.12,skin);
+rightArm.position.set(.43,1.52,0);
+
+const leftLeg=limb(princess,.55,.13,skin);
+leftLeg.position.set(-.2,.35,0);
+
+const rightLeg=limb(princess,.55,.13,skin);
+rightLeg.position.set(.2,.35,0);
+
+ball(princess,-.2,-.18,.07,.19,.11,.28,shoes);
+ball(princess,.2,-.18,.07,.19,.11,.28,shoes);
+
+// Backpack
+block(princess,0,1.25,-.31,.48,.55,.18,0x61b5e8);
+
+// Animals
+function animal(x,z,color){
+ const g=new THREE.Group();
+ scene.add(g);
+ g.position.set(x,0,z);
+
+ const fur=material(color);
+ ball(g,0,.75,0,.65,.4,.35,fur);
+ ball(g,0,1.05,.3,.28,.3,.27,fur);
+
+ ball(g,-.12,1.09,.55,.035,.04,.03,eye);
+ ball(g,.12,1.09,.55,.035,.04,.03,eye);
+
+ for(const xx of [-.4,.4]){
+  for(const zz of [-.2,.2]){
+   const leg=make(
+    new THREE.CylinderGeometry(.07,.08,.48,8),
+    fur,g,xx,.25,zz
+   );
+   leg.userData.leg=true;
+  }
  }
-
- // Main winding road
- ctx.lineCap="round";
- ctx.lineJoin="round";
- ctx.strokeStyle="#bd9b67";
- ctx.lineWidth=155;
- ctx.beginPath();
- ctx.moveTo(-50,850);
- ctx.bezierCurveTo(500,760,650,930,1080,830);
- ctx.bezierCurveTo(1500,730,1900,950,2650,690);
- ctx.stroke();
-
- ctx.strokeStyle="#e5c995";
- ctx.lineWidth=135;
- ctx.beginPath();
- ctx.moveTo(-50,850);
- ctx.bezierCurveTo(500,760,650,930,1080,830);
- ctx.bezierCurveTo(1500,730,1900,950,2650,690);
- ctx.stroke();
-
- // Cross path
- ctx.strokeStyle="#e5c995";
- ctx.lineWidth=100;
- ctx.beginPath();
- ctx.moveTo(1200,-50);
- ctx.bezierCurveTo(1100,400,1400,700,1250,1100);
- ctx.bezierCurveTo(1200,1450,1300,1650,1300,1950);
- ctx.stroke();
-
- // Little stream
- ctx.strokeStyle="#4b9cbb";
- ctx.lineWidth=75;
- ctx.beginPath();
- ctx.moveTo(1850,-30);
- ctx.bezierCurveTo(1760,400,2150,550,1980,930);
- ctx.bezierCurveTo(1830,1260,2210,1450,2200,1930);
- ctx.stroke();
-
- ctx.strokeStyle="#a5e8ed";
- ctx.lineWidth=7;
- ctx.beginPath();
- ctx.moveTo(1838,10);
- ctx.bezierCurveTo(1750,400,2135,550,1965,930);
- ctx.stroke();
-
- // Flower beds
- for(const f of flowers){
-  if(f.x<camera.x-80||f.x>camera.x+W+80||
-     f.y<camera.y-80||f.y>camera.y+H+80)continue;
-  ctx.fillStyle=f.c;
-  ellipse(f.x,f.y,f.size,f.size*1.5,f.c);
-  ellipse(f.x+3,f.y-2,f.size,f.size*1.3,f.c);
-  ellipse(f.x-3,f.y-2,f.size,f.size*1.3,f.c);
-  ellipse(f.x,f.y,1.5,1.5,"#f5d65e");
- }
+ return g;
 }
 
-function drawTree(t){
- const x=t.x,y=t.y,s=t.s;
- ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+const cow=animal(-5,3,0xf1eee4);
+const sheep=animal(5,5,0xe8d8b9);
+const goat=animal(7,-3,0x9b7553);
 
- ellipse(4,35,32,10,"#285c3b44");
- // trunk
- poly([[-10,15],[-7,-18],[8,-18],[12,20]],"#79502f");
- line(-5,-2,4,-19,"#a77a4a",4);
+// Coins
+const coins=[];
+const goldMat=material(0xffcf50,.4);
 
- // Layered leaves
- ellipse(0,-42,43,38,"#237c3e");
- ellipse(-24,-53,29,31,"#319c4b");
- ellipse(22,-56,30,32,"#45ad53");
- ellipse(0,-72,26,30,"#5cbd5d");
- ellipse(-12,-82,13,13,"#8ad96d");
- ellipse(20,-65,12,13,"#8ad96d");
+for(let i=0;i<18;i++){
+ let x=(Math.random()-.5)*27;
+ let z=(Math.random()-.5)*27;
 
- // Sunlit highlights
- ellipse(-19,-62,7,5,"#a1df77");
- ellipse(15,-83,6,5,"#9cde73");
- ctx.restore();
+ if(Math.abs(x)<4&&Math.abs(z)<4)x+=7;
+
+ const c=make(
+  new THREE.TorusGeometry(.27,.09,10,20),
+  goldMat,scene,x,.75,z
+ );
+ c.userData.baseY=.75;
+ coins.push(c);
 }
 
-function drawHouse(h){
- let x=h.x,y=h.y;
- ctx.save();ctx.translate(x,y);
+// Clouds
+function cloud(x,y,z){
+ const g=new THREE.Group();
+ scene.add(g);
+ g.position.set(x,y,z);
 
- // Garden shadow
- ellipse(78,164,108,18,"#315a3b44");
-
- // House walls
- rounded(0,50,155,112,8,h.c);
- // Side wall
- poly([[155,55],[186,38],[186,143],[155,162]],"#9c654c");
-
- // Wall highlights
- rounded(9,58,137,6,3,"#ffffff33");
-
- // Roof
- poly([[-16,57],[72,-10],[170,57],[155,68],[72,5],[0,69]],h.roof);
- poly([[72,-10],[170,57],[155,68],[72,5]],"#793c42");
-
- // Roof tile lines
  for(let i=0;i<5;i++){
-  line(18+i*24,37-i*15,85+i*16,76-i*4,"#eaa17a88",3);
- }
- line(3,58,160,58,"#f4b47d",4);
-
- // Windows
- rounded(18,83,35,39,5,"#8bd7e6");
- rounded(105,83,35,39,5,"#8bd7e6");
- line(35,84,35,121,"#fff0c8",3);
- line(18,101,53,101,"#fff0c8",3);
- line(122,84,122,121,"#fff0c8",3);
- line(105,101,140,101,"#fff0c8",3);
-
- // Window sill
- line(15,124,56,124,"#80503a",4);
- line(102,124,143,124,"#80503a",4);
-
- // Door
- rounded(62,99,32,63,8,"#74452e");
- ellipse(87,132,2.5,2.5,"#fbd47c");
-
- // Door arch
- ctx.strokeStyle="#f5d09b";
- ctx.lineWidth=3;
- ctx.beginPath();ctx.arc(78,100,17,Math.PI,0);ctx.stroke();
-
- // Chimney
- rounded(116,-19,17,36,3,"#a85e4b");
- line(115,-15,134,-15,"#e6b18a",3);
-
- // Flower pot
- rounded(7,143,15,13,3,"#b95d42");
- line(14,143,9,134,"#428b48",2);
- line(14,143,20,133,"#428b48",2);
-
- ctx.restore();
-}
-
-function drawFenceSegment(x1,y1,x2,y2){
- line(x1,y1,x2,y2,"#8a592f",7);
- line(x1,y1-10,x2,y2-10,"#b77c49",7);
- for(let t=0;t<=1;t+=.12){
-  let x=x1+(x2-x1)*t,y=y1+(y2-y1)*t;
-  line(x,y-19,x,y+5,"#8a592f",5);
+  ball(g,(i-2)*.55,0,0,.65,.4,.4,white);
  }
 }
-
-function drawBridge(){
- ctx.save();
- ctx.translate(2000,800);
- // Bridge over stream
- ellipse(0,35,120,18,"#315a3b44");
- poly([[-110,0],[-90,-22],[90,-22],[110,0],[100,30],[-100,30]],"#a88a69");
- line(-92,-15,92,-15,"#e5c99a",8);
- for(let x=-80;x<=80;x+=24){
-  line(x,-15,x,-55,"#8b6545",5);
- }
- line(-92,-55,92,-55,"#b38b60",7);
- ctx.restore();
-}
-
-// Character is drawn as a layered rear-facing adventure sprite
-function drawPrincess(){
- const p=player;
- let walk=p.moving?Math.sin(p.walk):0;
- let bob=p.moving?Math.abs(Math.sin(p.walk))*2:0;
-
- ctx.save();
- ctx.translate(p.x,p.y-p.jump);
- // Soft ground shadow
- ellipse(0,28+p.jump,24,9,"#24452c55");
-
- // Hair flowing behind
- ctx.fillStyle="#63352b";
- ctx.beginPath();
- ctx.moveTo(-12,-37);
- ctx.bezierCurveTo(-35,-18,-28,7,-15,14);
- ctx.quadraticCurveTo(0,22,16,13);
- ctx.bezierCurveTo(31,-2,26,-24,12,-39);
- ctx.closePath();ctx.fill();
-
- // Hair highlights
- line(-17,-25,-19,2,"#a96b48",3);
- line(-10,-30,-8,9,"#c18458",2);
- line(16,-25,19,3,"#9b6144",3);
-
- // Legs
- ctx.strokeStyle="#efbc96";
- ctx.lineWidth=8;
- line(-8,9,-9+walk*6,25+bob,"#efbc96",8);
- line(8,9,9-walk*6,25+bob,"#efbc96",8);
-
- // Shoes
- ellipse(-10+walk*6,27+bob,8,5,"#e45c9c");
- ellipse(10-walk*6,27+bob,8,5,"#e45c9c");
-
- // Gown silhouette
- let dressColor=royal?"#9560df":"#ed79b8";
- let grad=ctx.createLinearGradient(-25,0,25,20);
- grad.addColorStop(0,royal?"#7542be":"#c64e91");
- grad.addColorStop(.45,dressColor);
- grad.addColorStop(1,royal?"#c29aff":"#ffb2d9");
-
- poly([[-10,-19],[10,-19],[15,-4],[28,18],[19,25],[0,28],[-19,25],[-28,18],[-15,-4]],grad);
-
- // Skirt folds
- line(-13,-5,-20,17,"#ffd0e6",2);
- line(-4,-3,-7,23,"#ffd0e6",2);
- line(8,-3,10,23,"#bb4c91",2);
- line(15,-5,22,18,"#ffd0e6",2);
-
- // Embroidery
- for(let i=0;i<5;i++){
-  let xx=-16+i*8;
-  ellipse(xx,17+Math.abs(xx)*.18,1.8,3,"#fff0d0");
- }
-
- // Waist ribbon
- rounded(-10,-8,20,6,3,"#ffe3a5");
- ellipse(0,-5,4,4,"#fff0bd");
-
- // Arms
- line(-10,-14,-18+walk*5,-1,"#efbc96",6);
- line(10,-14,18-walk*5,-1,"#efbc96",6);
- ellipse(-18+walk*5,-1,4,4,"#efbc96");
- ellipse(18-walk*5,-1,4,4,"#efbc96");
-
- // Neck and head
- rounded(-5,-29,10,13,4,"#efbc96");
- ellipse(0,-39,15,17,"#efbc96");
-
- // Hair cap
- ctx.fillStyle="#60352c";
- ctx.beginPath();
- ctx.moveTo(-15,-42);
- ctx.bezierCurveTo(-20,-66,15,-69,16,-42);
- ctx.quadraticCurveTo(7,-49,1,-44);
- ctx.quadraticCurveTo(-7,-38,-15,-42);
- ctx.fill();
-
- // Hair side locks
- ellipse(-13,-34,5,13,"#75412e");
- ellipse(13,-34,5,13,"#75412e");
-
- // Crown
- poly([[-12,-51],[-10,-62],[-3,-55],[0,-68],[5,-55],[12,-62],[13,-49]],"#f6c83d");
- line(-11,-49,12,-49,"#fff1a3",3);
- ellipse(0,-59,3,3,"#f36c9e");
-
- if(flower){
-  for(let i=0;i<5;i++){
-   let a=i*Math.PI*2/5;
-   ellipse(-11+Math.cos(a)*4,-45+Math.sin(a)*4,3,3,"#ff78b4");
-  }
-  ellipse(-11,-45,2,2,"#ffdf6a");
- }
-
- ctx.restore();
-}
-
-// Detailed animal drawings, no emoji sprites
-function drawAnimal(a){
- ctx.save();
- ctx.translate(a.x,a.y);
- ctx.scale(Math.cos(a.angle)>=0?1:-1,1);
- const step=Math.sin(a.walk)*3;
-
- ellipse(0,13,24,6,"#315a3b44");
-
- if(a.type==="cow"){
-  // Legs
-  for(let x of [-13,12]){
-   line(x,2,x+step,15,"#e8dfd2",6);
-   line(x+step,15,x+step,17,"#514c4a",5);
-  }
-  // Body
-  ellipse(0,-3,25,16,"#f4eee2");
-  ellipse(-13,-8,8,8,"#37363b");
-  ellipse(11,1,8,8,"#34343b");
-  // Neck and head
-  ellipse(22,-12,11,11,"#f1e8d9");
-  ellipse(29,-7,7,5,"#edaa9d");
-  // Ears
-  ellipse(14,-18,7,4,"#eee4d6");
-  ellipse(35,-19,6,4,"#eee4d6");
-  // Horns
-  line(20,-21,17,-27,"#d9c39a",3);
-  line(32,-21,36,-27,"#d9c39a",3);
-  ellipse(26,-13,2,2,"#333");
-  // Tail
-  line(-23,-5,-30+Math.sin(a.walk)*3,-13,"#e9dfd2",3);
- }else if(a.type==="sheep"){
-  // Legs
-  for(let x of [-12,10])line(x,2,x+step,15,"#6c5548",5);
-  // Wool
-  for(let i=0;i<7;i++){
-   let x=-19+(i%4)*12;
-   let y=-8+Math.floor(i/4)*9;
-   ellipse(x,y,10,10,"#fff8e9");
-  }
-  // Face
-  ellipse(22,-7,10,12,"#bd947b");
-  ellipse(26,-8,2,2,"#292522");
-  ellipse(30,-2,3,2,"#e99d9b");
-  ellipse(16,-17,5,5,"#d9ad98");
- }else if(a.type==="rabbit"){
-  // Feet
-  ellipse(-7,12,8,4,"#c58e70");
-  ellipse(10,12,8,4,"#c58e70");
-  // Body
-  ellipse(0,-1,19,14,"#d7ae88");
-  // Head
-  ellipse(17,-10,12,12,"#e7c29c");
-  // Ears
-  ctx.save();ctx.rotate(Math.sin(a.walk)*.12);
-  ellipse(12,-29,5,14,"#d9b08b");
-  ellipse(22,-29,5,13,"#d9b08b");
-  ellipse(12,-29,2,9,"#e98e9d");
-  ellipse(22,-29,2,8,"#e98e9d");
-  ctx.restore();
-  // Tail
-  ellipse(-17,-1,6,6,"#fff1df");
-  ellipse(20,-12,2,2,"#42302a");
-  ellipse(27,-5,3,2,"#dc8b94");
- }else if(a.type==="chicken"){
-  // Legs
-  line(-4,3,-5+step,15,"#d88a36",3);
-  line(7,3,8-step,15,"#d88a36",3);
-  // Body
-  ellipse(0,-4,17,14,"#fff4df");
-  // Wing
-  ellipse(-5,-5,9,7,"#e9d7b8");
-  // Head
-  ellipse(12,-17,9,9,"#fff1d9");
-  // Comb
-  ellipse(8,-27,3,4,"#cf4541");
-  ellipse(13,-28,3,4,"#cf4541");
-  ellipse(17,-26,3,4,"#cf4541");
-  // Beak
-  poly([[20,-17],[29,-14],[20,-11]],"#e8a23d");
-  ellipse(14,-18,1.7,1.7,"#302820");
-  // Tail
-  ellipse(-16,-11,5,5,"#f0e0c5");
- }
- ctx.restore();
-}
-
-function drawCoins(){
- for(const c of coinsList){
-  if(c.got)continue;
-  if(c.x<camera.x-40||c.x>camera.x+W+40||
-     c.y<camera.y-40||c.y>camera.y+H+40)continue;
-
-  let pulse=1+Math.sin(frame*.08+c.phase)*.1;
-  ctx.save();
-  ctx.translate(c.x,c.y+Math.sin(frame*.06+c.phase)*3);
-  ctx.scale(pulse,1);
-
-  ellipse(2,5,12,4,"#526c3455");
-  let g=ctx.createRadialGradient(-4,-5,1,0,0,12);
-  g.addColorStop(0,"#fff6a7");
-  g.addColorStop(.5,"#ffd53b");
-  g.addColorStop(1,"#d88b13");
-  ellipse(0,0,10,12,g);
-  ctx.strokeStyle="#fff0a0";ctx.lineWidth=2;
-  ctx.beginPath();ctx.ellipse(0,0,10,12,0,0,Math.PI*2);ctx.stroke();
-  ctx.fillStyle="#a66c0d";ctx.font="bold 12px Arial";
-  ctx.textAlign="center";ctx.fillText("$",0,4);
-  ctx.restore();
- }
-}
-
-function drawWorld(){
- ctx.save();
- ctx.translate(-camera.x,-camera.y);
-
- drawGround();
-
- // Sort scenery by depth
- const objects=[];
- for(const t of trees)objects.push({y:t.y,draw:()=>drawTree(t)});
- for(const h of houses)objects.push({y:h.y+160,draw:()=>drawHouse(h)});
- objects.push({y:835,draw:drawBridge});
-
- objects.sort((a,b)=>a.y-b.y);
- for(const o of objects){
-  if(o.y>camera.y-120&&o.y<camera.y+H+120)o.draw();
- }
-
- drawCoins();
-
- // Animals and princess are depth sorted
- const actors=animals.map(a=>({y:a.y,draw:()=>drawAnimal(a)}));
- actors.push({y:player.y,draw:drawPrincess});
- actors.sort((a,b)=>a.y-b.y);
- for(const a of actors)a.draw();
-
- // Boundary fence
- ctx.strokeStyle="#8b5c35";ctx.lineWidth=13;
- ctx.strokeRect(42,42,WORLD.w-84,WORLD.h-84);
- ctx.strokeStyle="#d4a477";ctx.lineWidth=3;
- ctx.strokeRect(48,48,WORLD.w-96,WORLD.h-96);
-
- ctx.restore();
-}
-
-function updateAnimals(){
- for(const a of animals){
-  a.timer--;
-  if(a.timer<=0){
-   a.angle=rand(0,Math.PI*2);
-   a.timer=rand(80,200);
-  }
-
-  let nx=a.x+Math.cos(a.angle)*a.speed;
-  let ny=a.y+Math.sin(a.angle)*a.speed;
-
-  if(nx<90||nx>WORLD.w-90||ny<90||ny>WORLD.h-90){
-   a.angle+=Math.PI;
-  }else{
-   a.x=nx;a.y=ny;
-  }
-  a.walk+=.13;
- }
-}
-
-function update(){
- frame++;
-
- let dx=0,dy=0;
- if(keys.left||keys.a)dx--;
- if(keys.right||keys.d)dx++;
- if(keys.up||keys.w)dy--;
- if(keys.down||keys.s)dy++;
-
- player.moving=!!(dx||dy);
-
- if(player.moving){
-  let len=Math.hypot(dx,dy);
-  dx=dx/len*player.speed;
-  dy=dy/len*player.speed;
-  player.walk+=.22;
-  if(dx)player.dir=Math.sign(dx);
-
-  let nx=clamp(player.x+dx,75,WORLD.w-75);
-  let ny=clamp(player.y+dy,75,WORLD.h-75);
-  player.x=nx;player.y=ny;
- }else{
-  player.walk*=.85;
- }
-
- if(player.jump>0)player.jump=Math.max(0,player.jump-1);
-
- camera.x=clamp(player.x-W/2,0,WORLD.w-W);
- camera.y=clamp(player.y-H/2,0,WORLD.h-H);
-
- // Coin collection
- for(const c of coinsList){
-  if(!c.got&&dist(player.x,player.y,c.x,c.y)<31){
-   c.got=true;coins++;
-   updateUI();
-   say("Golden coin collected! ✨");
-  }
- }
-
- updateAnimals();
-}
-
-function loop(){
- update();
- drawWorld();
- if(messageTime>0)messageTime--;
- requestAnimationFrame(loop);
-}
+cloud(-12,13,-18);
+cloud(8,15,-22);
+cloud(17,12,12);
 
 // Controls
-document.querySelectorAll("[data-key]").forEach(btn=>{
- let k=btn.dataset.key;
- btn.addEventListener("pointerdown",e=>{
-  e.preventDefault();keys[k]=true;
-  btn.setPointerCapture(e.pointerId);
+const keys={};
+const controls={
+ up:'ArrowUp',
+ down:'ArrowDown',
+ left:'ArrowLeft',
+ right:'ArrowRight'
+};
+
+function setKey(k,v){
+ keys[k]=v;
+}
+
+for(const [id,key] of Object.entries(controls)){
+ const el=document.getElementById(id);
+
+ el.addEventListener('pointerdown',e=>{
+  e.preventDefault();
+  el.setPointerCapture(e.pointerId);
+  setKey(key,true);
  });
- const release=()=>keys[k]=false;
- btn.addEventListener("pointerup",release);
- btn.addEventListener("pointercancel",release);
- btn.addEventListener("lostpointercapture",release);
+
+ function release(){
+  setKey(key,false);
+ }
+
+ el.addEventListener('pointerup',release);
+ el.addEventListener('pointercancel',release);
+ el.addEventListener('lostpointercapture',release);
+}
+
+addEventListener('keydown',e=>{
+ keys[e.key]=true;
 });
 
-addEventListener("keydown",e=>{
- let k=e.key.toLowerCase();
- keys[k]=true;
- if(["arrowup","arrowdown","arrowleft","arrowright"," "].includes(k))e.preventDefault();
-});
-addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
-addEventListener("blur",()=>Object.keys(keys).forEach(k=>keys[k]=false));
-
-document.getElementById("jump").addEventListener("pointerdown",e=>{
- e.preventDefault();
- player.jump=20;
- say("Princess is jumping! 🌟");
+addEventListener('keyup',e=>{
+ keys[e.key]=false;
 });
 
-const panel=document.getElementById("panel");
-document.getElementById("shop").onclick=()=>{
- updateUI();panel.style.display="block";
-};
-document.getElementById("close").onclick=()=>panel.style.display="none";
+addEventListener('blur',()=>{
+ Object.keys(keys).forEach(k=>keys[k]=false);
+});
 
-document.getElementById("flowerBuy").onclick=()=>{
- if(flower){say("You already have the flower crown!");return;}
- if(coins<5){say("Collect 5 coins first!");return;}
- coins-=5;flower=true;updateUI();say("Flower crown purchased! 🌺");
-};
-document.getElementById("dressBuy").onclick=()=>{
- if(royal){say("You already have the royal gown!");return;}
- if(coins<10){say("Collect 10 coins first!");return;}
- coins-=10;royal=true;updateUI();say("Royal gown purchased! 👗");
+// Messages and rewards
+let coinsCount=0;
+const message=document.getElementById('message');
+let messageTimer;
+
+function say(t){
+ message.textContent=t;
+ message.style.display='block';
+
+ clearTimeout(messageTimer);
+ messageTimer=setTimeout(()=>{
+  message.style.display='none';
+ },2500);
+}
+
+document.getElementById('shop').onclick=()=>{
+ if(coinsCount>=5){
+  coinsCount-=5;
+  document.getElementById('coins').textContent=coinsCount;
+  say('🎁 You bought a beautiful village gift!');
+ }else{
+  say('Collect 5 coins to buy a gift!');
+ }
 };
 
-updateUI();
-say("Welcome to Dream Village V15! 👑");
-loop();
+// Game loop
+const clock=new THREE.Clock();
+
+function animate(){
+ requestAnimationFrame(animate);
+
+ const dt=Math.min(clock.getDelta(),.04);
+ const t=clock.elapsedTime;
+
+ let dx=0;
+ let dz=0;
+
+ if(keys.ArrowUp||keys.w||keys.W)dz-=1;
+ if(keys.ArrowDown||keys.s||keys.S)dz+=1;
+ if(keys.ArrowLeft||keys.a||keys.A)dx-=1;
+ if(keys.ArrowRight||keys.d||keys.D)dx+=1;
+
+ const moving=Math.abs(dx)+Math.abs(dz)>0;
+
+ if(moving){
+  const len=Math.hypot(dx,dz);
+  dx/=len;
+  dz/=len;
+
+  princess.position.x+=dx*5*dt;
+  princess.position.z+=dz*5*dt;
+
+  princess.rotation.y=Math.atan2(dx,dz);
+
+  const swing=Math.sin(t*11)*.55;
+
+  leftLeg.rotation.x=swing;
+  rightLeg.rotation.x=-swing;
+  leftArm.rotation.x=-swing*.7;
+  rightArm.rotation.x=swing*.7;
+ }else{
+  leftLeg.rotation.x*=.8;
+  rightLeg.rotation.x*=.8;
+  leftArm.rotation.x*=.8;
+  rightArm.rotation.x*=.8;
+ }
+
+ // Keep character inside village
+ princess.position.x=THREE.MathUtils.clamp(princess.position.x,-23,23);
+ princess.position.z=THREE.MathUtils.clamp(princess.position.z,-22,22);
+
+ princess.position.y=moving?Math.abs(Math.sin(t*11))*.06:0;
+
+ // Camera follows character
+ const desired=new THREE.Vector3(
+  princess.position.x,
+  8.5,
+  princess.position.z+11
+ );
+
+ camera.position.lerp(desired,.07);
+ camera.lookAt(
+  princess.position.x,
+  1.1,
+  princess.position.z
+ );
+
+ // Animals move and walk
+ [cow,sheep,goat].forEach((a,i)=>{
+  a.position.x+=Math.sin(t*.45+i)*.25*dt;
+  a.position.z+=Math.cos(t*.4+i)*.25*dt;
+  a.rotation.y=Math.sin(t*.45+i)*.5;
+
+  a.children.forEach((child,j)=>{
+   if(child.userData.leg){
+    child.rotation.x=Math.sin(t*4+j+i)*.15;
+   }
+  });
+ });
+
+ // Coins spin and collect
+ coins.forEach(c=>{
+  c.rotation.y=t*2;
+  c.position.y=c.userData.baseY+
+   Math.sin(t*3+c.position.x)*.12;
+
+  if(c.visible&&c.position.distanceTo(princess.position)<1.1){
+   c.visible=false;
+   coinsCount++;
+
+   document.getElementById('coins').textContent=coinsCount;
+   say('✨ Coin collected! +1');
+  }
+ });
+
+ renderer.render(scene,camera);
+}
+
+animate();
+
+// Screen resizing
+addEventListener('resize',()=>{
+ camera.aspect=innerWidth/innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
+});
 </script>
 </body>
 </html>
