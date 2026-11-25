@@ -1,54 +1,639 @@
+
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Dream Village Adventure V22</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Dream Village Adventure V23</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#b9dff0;font-family:Arial,sans-serif;touch-action:none}#game{position:fixed;inset:0}canvas{display:block;width:100%;height:100%}#hud{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;z-index:5;pointer-events:none}.pill,#message,#mission{background:#fffffff0;color:#31523b;padding:10px 14px;border-radius:20px;font-weight:bold;box-shadow:0 3px 12px #31523b30;font-size:13px}#message,#mission{position:fixed;left:50%;transform:translateX(-50%);z-index:5;white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis}#message{top:65px}#mission{top:112px}#controls{position:fixed;bottom:20px;left:12px;display:grid;grid-template-columns:54px 54px 54px;grid-template-rows:54px 54px;gap:5px;z-index:8}.ctrl{border:2px solid #fff;border-radius:17px;background:#ffffffe8;color:#65402f;font-size:23px;font-weight:bold;box-shadow:0 3px 8px #0003;touch-action:none}#up{grid-column:2}#left{grid-column:1;grid-row:2}#down{grid-column:2;grid-row:2}#right{grid-column:3;grid-row:2}#actions{position:fixed;bottom:28px;right:12px;display:flex;flex-direction:column;gap:10px;z-index:8}.action{border:0;border-radius:22px;padding:14px;background:#ffcf55;color:#65402f;font-weight:bold;font-size:14px;box-shadow:0 3px 9px #0003}#help{position:fixed;bottom:5px;left:50%;transform:translateX(-50%);font-size:11px;color:white;text-shadow:0 1px 4px #333;z-index:4;white-space:nowrap}#shopPanel{position:fixed;inset:0;z-index:30;display:none;place-items:center;background:#17351f99;padding:18px}#shopCard{width:min(360px,94vw);background:#fff8e9;border:3px solid #c9a56b;border-radius:22px;padding:18px;color:#493525}#shopCard h2{margin:0 0 8px}.shopItem{display:flex;justify-content:space-between;align-items:center;gap:8px;background:white;border-radius:12px;padding:10px;margin:8px 0;font-weight:bold;font-size:13px}.shopItem button,#closeShop{border:0;border-radius:10px;padding:9px 12px;background:#ffcf55;font-weight:bold}#closeShop{width:100%;margin-top:8px;background:#83c77c}#loading{position:fixed;inset:0;display:grid;place-items:center;background:#b9dff0;color:#31523b;font-weight:bold;z-index:20;text-align:center;padding:24px}
-</style><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script></head><body>
-<div id="game"></div><div id="loading">Building your new village adventure…</div><div id="hud"><div class="pill">🌸 DREAM VILLAGE V22</div><div class="pill">🪙 <span id="coins">0</span></div></div><div id="message">Welcome home! Explore the village.</div><div id="mission">⭐ Collect 5 golden coins (0/5)</div>
-<div id="controls"><button class="ctrl" id="up">▲</button><button class="ctrl" id="left">◀</button><button class="ctrl" id="down">▼</button><button class="ctrl" id="right">▶</button></div><div id="actions"><button class="action" id="shop">🛍️ SHOP</button><button class="action" id="gift">🎁 GIFT</button></div><div id="help">Hold the arrows to walk and collect golden coins</div>
-<div id="shopPanel"><div id="shopCard"><h2>🛍️ Village Shop</h2><p>Spend your coins on accessories.</p><div class="shopItem"><span>🎀 Pink hair bow · 5</span><button data-item="bow" data-cost="5">BUY</button></div><div class="shopItem"><span>🎒 Travel backpack · 8</span><button data-item="bag" data-cost="8">BUY</button></div><div class="shopItem"><span>🌼 Flower crown · 10</span><button data-item="crown" data-cost="10">BUY</button></div><p id="shopNote">Your coins: <span id="shopCoins">0</span></p><button id="closeShop">CLOSE</button></div></div>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#b9dff0;font-family:Arial,sans-serif;touch-action:none}
+#game{position:fixed;inset:0}
+canvas{display:block;width:100%;height:100%}
+#hud{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;z-index:5;pointer-events:none}
+.pill{background:#fffF;color:#31523b;padding:10px 14px;border-radius:20px;font-weight:bold;box-shadow:0 3px 12px #31523b30;font-size:13px}
+#message,#mission{position:fixed;left:50%;transform:translateX(-50%);z-index:5;background:#fffffff0;color:#31523b;padding:9px 14px;border-radius:18px;font-weight:bold;font-size:13px;white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis}
+#message{top:65px}#mission{top:111px}
+#controls{position:fixed;bottom:20px;left:12px;display:grid;grid-template-columns:53px 53px 53px;grid-template-rows:53px 53px;gap:5px;z-index:8}
+.ctrl{border:2px solid white;border-radius:17px;background:#ffffffe8;color:#65402f;font-size:22px;font-weight:bold;box-shadow:0 3px 8px #0003;touch-action:none}
+#up{grid-column:2}#left{grid-column:1;grid-row:2}#down{grid-column:2;grid-row:2}#right{grid-column:3;grid-row:2}
+#actions{position:fixed;bottom:26px;right:12px;display:flex;flex-direction:column;gap:10px;z-index:8}
+.action{border:0;border-radius:22px;padding:13px;background:#ffcf55;color:#65402f;font-weight:bold;font-size:13px;box-shadow:0 3px 9px #0003}
+#help{position:fixed;bottom:5px;left:50%;transform:translateX(-50%);font-size:10px;color:white;text-shadow:0 1px 4px #333;z-index:4;white-space:nowrap}
+#shopPanel{position:fixed;inset:0;z-index:30;display:none;place-items:center;background:#17351f99;padding:18px}
+#shopCard{width:min(360px,94vw);background:#fff8e9;border:3px solid #c9a56b;border-radius:22px;padding:18px;color:#493525}
+#shopCard h2{margin:0 0 8px}
+.shopItem{display:flex;justify-content:space-between;align-items:center;gap:8px;background:white;border-radius:12px;padding:10px;margin:8px 0;font-weight:bold;font-size:13px}
+.shopItem button,#closeShop{border:0;border-radius:10px;padding:9px 12px;background:#ffcf55;font-weight:bold}
+#closeShop{width:100%;margin-top:8px;background:#83c77c}
+#loading{position:fixed;inset:0;display:grid;place-items:center;background:#b9dff0;color:#31523b;font-weight:bold;z-index:20;text-align:center;padding:24px}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
+</script>
+</head>
+<body>
+<div id="game"></div>
+<div id="loading">🌸 Creating your beautiful village…</div>
+
+<div id="hud">
+<div class="pill">🌸 DREAM VILLAGE V23</div>
+<div class="pill">🪙 <span id="coins">0</span></div>
+</div>
+<div id="message">Welcome to your beautiful village!</div>
+<div id="mission">⭐ Collect 5 golden coins (0/5)</div>
+
+<div id="controls">
+<button class="ctrl" id="up">▲</button>
+<button class="ctrl" id="left">◀</button>
+<button class="ctrl" id="down">▼</button>
+<button class="ctrl" id="right">▶</button>
+</div>
+<div id="actions">
+<button class="action" id="shop">🛍️ SHOP</button>
+<button class="action" id="gift">🎁 GIFT</button>
+</div>
+<div id="help">Hold arrows to explore your village</div>
+
+<div id="shopPanel">
+<div id="shopCard">
+<h2>🛍️ Village Shop</h2>
+<p>Choose something special!</p>
+<div class="shopItem"><span>🎀 Pink hair bow · 5</span><button data-item="bow" data-cost="5">BUY</button></div>
+<div class="shopItem"><span>🎒 Travel backpack · 8</span><button data-item="bag" data-cost="8">BUY</button></div>
+<div class="shopItem"><span>🌼 Flower crown · 10</span><button data-item="crown" data-cost="10">BUY</button></div>
+<p id="shopNote">Your coins: <span id="shopCoins">0</span></p>
+<button id="closeShop">CLOSE</button>
+</div>
+</div>
+
 <script type="module">
 import * as THREE from 'three';
-const $=id=>document.getElementById(id),say=s=>$('message').textContent=s;
+
+const $=id=>document.getElementById(id);
+const say=s=>$('message').textContent=s;
+
 try{
-const scene=new THREE.Scene();scene.background=new THREE.Color(0xb9dff0);scene.fog=new THREE.Fog(0xb9dff0,95,205);
+
+// WORLD
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xb9dff0);
+scene.fog=new THREE.Fog(0xb9dff0,85,175);
+
 const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,240);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;$('game').appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xeaf7ff,0x66764c,1.7));const sun=new THREE.DirectionalLight(0xffedcf,2.5);sun.position.set(-25,38,20);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-42;sun.shadow.camera.right=42;sun.shadow.camera.top=42;sun.shadow.camera.bottom=-42;sun.shadow.bias=-.0002;scene.add(sun);
-function texture(base,variation,repeat=8){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d'),im=x.createImageData(128,128),n=parseInt(base.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;for(let i=0;i<im.data.length;i+=4){let q=(Math.random()-.5)*variation;im.data[i]=Math.max(0,Math.min(255,r+q));im.data[i+1]=Math.max(0,Math.min(255,g+q));im.data[i+2]=Math.max(0,Math.min(255,b+q));im.data[i+3]=255}x.putImageData(im,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(repeat,repeat);t.colorSpace=THREE.SRGBColorSpace;return t}
-const material=(color,rough=.9,map=null)=>new THREE.MeshStandardMaterial({color,roughness:rough,map});const grass=material(0xffffff,1,texture('#789e54',30,28)),dirt=material(0xffffff,1,texture('#b99a70',28,10)),plaster=material(0xffffff,1,texture('#d9bd91',18,3)),wood=material(0xffffff,1,texture('#795034',24,3)),leaf=material(0x477d3d),leaf2=material(0x356b36),stone=material(0x9b9688);
-function add(parent,geo,mat,x,y,z){const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}function box(p,x,y,z,w,h,d,m){return add(p,new THREE.BoxGeometry(w,h,d),m,x,y,z)}function ball(p,x,y,z,r,m,sx=1,sy=1,sz=1){const o=add(p,new THREE.SphereGeometry(r,24,18),m,x,y,z);o.scale.set(sx,sy,sz);return o}
-const floor=add(scene,new THREE.PlaneGeometry(220,220),grass,0,0,0);floor.rotation.x=-Math.PI/2;
-// Soft-edged village lanes with gravel shoulders
-function road(x,z,w,d){let r=add(scene,new THREE.PlaneGeometry(w,d),dirt,x,.018,z);r.rotation.x=-Math.PI/2;let a=add(scene,new THREE.PlaneGeometry(w+.45,d+.45),stone,x,.009,z);a.rotation.x=-Math.PI/2;a.material=material(0x9d927c)}road(0,0,6.2,155);road(0,-17,125,5.2);road(19,0,5,110);road(-28,12,4.5,90);road(0,35,110,4.5);
-const roofColors=[0x864b38,0x76523c,0x9b6545,0x665c50];function house(x,z,wall,roof){const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);box(g,0,1.35,0,4.6,2.7,3.8,material(wall,1,texture('#d9bd91',18,3)));box(g,0,.92,1.94,.85,1.8,.12,wood);for(const wx of [-1.35,1.35]){box(g,wx,1.65,1.96,.85,.85,.12,material(0x8bb7bd,.3));box(g,wx,1.65,2.04,.08,.95,.06,material(0xf4e8cf));box(g,wx,1.65,2.04,.95,.08,.06,material(0xf4e8cf))}let r=add(g,new THREE.ConeGeometry(3.7,2.1,4),material(roof,.95,texture('#864b38',20,3)),0,3.65,0);r.rotation.y=Math.PI/4;r.scale.z=.88;box(g,0,.1,2.25,1.5,.2,.75,material(0xb9a27d));return g}house(-12,-15,0xe0c79c,0x884d3c);house(12,-18,0xd7ad91,0x6c5142);house(-15,13,0xd9c99e,0x657b59);house(14,14,0xe4c39c,0x8c5943);
-// Layered trees with irregular crowns and textured trunks
-function tree(x,z,s=1){const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(s);scene.add(g);add(g,new THREE.CylinderGeometry(.22,.36,2.1,10),wood,0,1,0);ball(g,0,2.45,0,1.22,leaf,1.05,1.2,.95);ball(g,-.62,2.2,.12,.78,leaf2,1.1,1,.95);ball(g,.58,2.18,-.1,.82,leaf,1.1,1,.9);ball(g,.05,2.95,.05,.72,leaf2,1,.9,1)}for(let i=0;i<105;i++){let x=(Math.random()-.5)*112,z=(Math.random()-.5)*132;if(Math.abs(x)>5&&Math.abs(z)>5)tree(x,z,.75+Math.random()*.45)}
-// Shrubs, grass tufts and flower patches
-const flower=[0xffd66b,0xe78eaa,0xf4eee0,0xb69bd8].map(c=>material(c));for(let i=0;i<260;i++){let x=(Math.random()-.5)*105,z=(Math.random()-.5)*125;if(Math.abs(x)>4){const h=.18+Math.random()*.22;add(scene,new THREE.ConeGeometry(.045,h,5),material(0x4f8241),x,h/2,z);if(i%3===0)ball(scene,x,h+.03,z,.11,flower[i%4])}}
-// Redesigned adventurer: layered hair, face, clothing seams, sleeves, hands and boots.
-const player=new THREE.Group();scene.add(player);const body=new THREE.Group();player.add(body);
-const skin=material(0xc98f6d),hair=material(0x30201b),hairHi=material(0x4b3027),dress=material(0x477b9b),cloth=material(0xd8e7e8),shoe=material(0x49372f),eye=material(0x211714),bag=material(0x9b6740),goldTrim=material(0xd9b56b);
-const legL=new THREE.Group(),legR=new THREE.Group();legL.position.set(-.2,.66,0);legR.position.set(.2,.66,0);body.add(legL,legR);
-for(const l of [legL,legR]){add(l,new THREE.CylinderGeometry(.105,.13,.52,14),skin,0,-.24,0);add(l,new THREE.CylinderGeometry(.14,.16,.16,14),shoe,0,-.53,.08);}
-add(body,new THREE.CylinderGeometry(.31,.43,.72,24),dress,0,1.18,0);add(body,new THREE.TorusGeometry(.34,.035,8,28),goldTrim,0,.86,0).rotation.x=Math.PI/2;
-add(body,new THREE.CylinderGeometry(.24,.27,.16,20),cloth,0,1.58,0);add(body,new THREE.CylinderGeometry(.12,.13,.25,16),skin,0,1.77,0);
-ball(body,0,2.22,.015,.43,skin,.84,1.08,.78);
-// Hair cap and long rear locks.
-ball(body,0,2.49,-.06,.46,hair,.98,.62,.9);ball(body,-.36,2.22,-.14,.18,hairHi,.8,1.5,1.1);ball(body,.36,2.22,-.14,.18,hairHi,.8,1.5,1.1);ball(body,0,2.02,-.35,.34,hair,.9,1.2,.55);
-ball(body,-.17,2.25,.36,.047,eye);ball(body,.17,2.25,.36,.047,eye);ball(body,-.18,2.31,.395,.014,cloth);ball(body,.16,2.31,.395,.014,cloth);ball(body,0,2.08,.39,.045,material(0x9c554c));
-ball(body,-.27,2.13,.32,.07,material(0xd98d80),1,.55,.45);ball(body,.27,2.13,.32,.07,material(0xd98d80),1,.55,.45);
-// Neck scarf and shoulder straps.
-add(body,new THREE.TorusGeometry(.16,.045,8,20),goldTrim,0,1.72,0);
-const arms=[];for(const x of [-.39,.39]){let a=new THREE.Group();a.position.set(x,1.48,0);body.add(a);add(a,new THREE.CylinderGeometry(.12,.14,.38,14),dress,0,-.18,0);add(a,new THREE.CylinderGeometry(.085,.11,.34,14),skin,0,-.53,0);ball(a,0,-.72,.02,.105,skin);arms.push(a)}
-// Backpack with flap and straps.
-add(body,new THREE.BoxGeometry(.38,.48,.2),bag,0,1.28,-.34);add(body,new THREE.BoxGeometry(.3,.16,.22),goldTrim,0,1.51,-.35);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.1;
+$('game').appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xeaf7ff,0x64774a,1.8));
+
+const sun=new THREE.DirectionalLight(0xffe7c1,2.4);
+sun.position.set(-25,40,25);
+sun.castShadow=true;
+sun.shadow.mapSize.set(1536,1536);
+sun.shadow.camera.left=-45;
+sun.shadow.camera.right=45;
+sun.shadow.camera.top=45;
+sun.shadow.camera.bottom=-45;
+scene.add(sun);
+
+// MATERIALS
+function mat(c,r=.85){
+return new THREE.MeshStandardMaterial({color:c,roughness:r});
+}
+const grass=mat(0x739b55);
+const grassLight=mat(0x88a85c);
+const dirt=mat(0xbda17d);
+const wood=mat(0x70472d);
+const darkWood=mat(0x483027);
+const leaves=mat(0x4c813d);
+const leaves2=mat(0x679348);
+const leaves3=mat(0x386d39);
+const white=mat(0xf8eee0);
+const gold=mat(0xffc52b,.3);
+
+function add(p,g,m,x,y,z){
+const o=new THREE.Mesh(g,m);
+o.position.set(x,y,z);
+o.castShadow=true;
+o.receiveShadow=true;
+p.add(o);
+return o;
+}
+function box(p,x,y,z,w,h,d,m){
+return add(p,new THREE.BoxGeometry(w,h,d),m,x,y,z);
+}
+function ball(p,x,y,z,r,m,sx=1,sy=1,sz=1){
+const o=add(p,new THREE.SphereGeometry(r,20,16),m,x,y,z);
+o.scale.set(sx,sy,sz);
+return o;
+}
+
+// GROUND
+add(scene,new THREE.PlaneGeometry(220,220),grass,0,-.04,0).rotation.x=-Math.PI/2;
+
+// ROADS
+function road(x,z,w,d){
+const r=add(scene,new THREE.PlaneGeometry(w,d),dirt,x,.005,z);
+r.rotation.x=-Math.PI/2;
+const edge=add(scene,new THREE.PlaneGeometry(w+.55,d+.55),mat(0x9c927b),x,-.015,z);
+edge.rotation.x=-Math.PI/2;
+}
+road(0,0,6,175);
+road(0,-18,120,5);
+road(19,0,5,110);
+road(-27,10,4,90);
+road(0,36,110,5);
+
+// FLOWER PATCHES
+const flowerMats=[0xffd66b,0xe98ca9,0xf6eee0,0xb79bdc].map(mat);
+for(let i=0;i<330;i++){
+const x=(Math.random()-.5)*105;
+const z=(Math.random()-.5)*135;
+if(Math.abs(x)<4.5)continue;
+const h=.15+Math.random()*.2;
+add(scene,new THREE.ConeGeometry(.035,h,5),mat(0x477b3b),x,h/2,z);
+if(i%3===0)ball(scene,x,h,z,.09,flowerMats[i%4]);
+}
+
+// HOUSES
+function house(x,z,wall,roofColor){
+const g=new THREE.Group();
+g.position.set(x,0,z);
+scene.add(g);
+
+const wallMat=mat(wall);
+const roofMat=mat(roofColor);
+box(g,0,1.4,0,4.8,2.8,3.9,wallMat);
+
+// ROOF
+const roof=add(g,new THREE.ConeGeometry(3.8,2.2,4),roofMat,0,3.8,0);
+roof.rotation.y=Math.PI/4;
+roof.scale.z=.9;
+
+// DOOR
+box(g,0,.95,1.98,.9,1.9,.12,wood);
+ball(g,.31,.95,2.06,.07,gold);
+
+// WINDOWS
+for(const x2 of [-1.45,1.45]){
+box(g,x2,1.75,2,.9,.9,.12,mat(0x9dc8d0,.3));
+box(g,x2,1.75,2.08,.08,1,.05,white);
+box(g,x2,1.75,2.08,1,.08,.05,white);
+}
+
+// CHIMNEY
+box(g,1.35,3.15,-.6,.55,1.25,.55,mat(0x8a5740));
+
+// STEPS
+box(g,0,.13,2.3,1.7,.24,.7,mat(0xa99b7e));
+}
+house(-12,-15,0xe6cba4,0x8c4d3d);
+house(12,-18,0xe1b69a,0x74513f);
+house(-15,14,0xd9cba4,0x687e56);
+house(14,14,0xe8c79f,0x985b43);
+house(-36,-28,0xe5c4a0,0x8c5141);
+house(35,30,0xdac9a2,0x685a48);
+
+// TREES
+function tree(x,z,s=1){
+const g=new THREE.Group();
+g.position.set(x,0,z);
+g.scale.setScalar(s);
+scene.add(g);
+
+add(g,new THREE.CylinderGeometry(.2,.33,2.2,10),wood,0,1,0);
+ball(g,0,2.55,0,1.15,leaves,1.1,1.2,1);
+ball(g,-.55,2.3,.1,.78,leaves2,1.1,1,.9);
+ball(g,.58,2.35,-.1,.82,leaves3,1.1,1,.9);
+ball(g,.05,3.05,.05,.75,leaves2);
+}
+for(let i=0;i<115;i++){
+const x=(Math.random()-.5)*110;
+const z=(Math.random()-.5)*140;
+if(Math.abs(x)>6&&Math.abs(z)>5)tree(x,z,.8+Math.random()*.5);
+}
+
+// FENCES
+function fence(x,z,length){
+for(let i=0;i<length;i++){
+box(scene,x+i*.9,.55,z,.12,1.1,.12,wood);
+}
+box(scene,x+(length-1)*.45,.85,z, length*.9,.13,.15,wood);
+}
+fence(-25,-22,13);
+fence(17,-27,12);
+fence(-24,22,13);
+fence(17,23,12);
+
+// CHARACTER
+const player=new THREE.Group();
+scene.add(player);
+
+const body=new THREE.Group();
+player.add(body);
+
+const skin=mat(0xc98e6c);
+const hair=mat(0x34221b);
+const hairLight=mat(0x59402d);
+const dress=mat(0x477da1);
+const dressLight=mat(0x78a7c2);
+const shoes=mat(0x49352b);
+const eye=mat(0x211713);
+const goldTrim=mat(0xe8c36c);
+const bagMat=mat(0x9a6040);
+const pink=mat(0xed82a9);
+
+// BODY
+const torso=add(body,new THREE.CylinderGeometry(.3,.43,.83,24),dress,0,1.25,0);
+add(body,new THREE.TorusGeometry(.35,.035,8,24),goldTrim,0,.87,0).rotation.x=Math.PI/2;
+
+// CLOTHING DETAILS
+box(body,0,1.13,.29,.22,.12,.035,dressLight);
+for(let i=0;i<3;i++){
+ball(body,0,1.35-i*.13,.32,.035,goldTrim);
+}
+
+// NECK
+add(body,new THREE.CylinderGeometry(.12,.13,.23,16),skin,0,1.76,0);
+
+// HEAD
+ball(body,0,2.22,.02,.43,skin,.85,1.08,.8);
+
+// EARS
+ball(body,-.39,2.2,0,.105,skin);
+ball(body,.39,2.2,0,.105,skin);
+
+// HAIR
+ball(body,0,2.5,-.06,.46,hair,1,.64,.92);
+ball(body,-.37,2.27,-.12,.19,hairLight,.8,1.5,1);
+ball(body,.37,2.27,-.12,.19,hairLight,.8,1.5,1);
+ball(body,0,2.07,-.32,.32,hair,.95,1.15,.65);
+
+// EYES
+ball(body,-.17,2.26,.365,.047,eye);
+ball(body,.17,2.26,.365,.047,eye);
+ball(body,-.18,2.32,.405,.014,white);
+ball(body,.16,2.32,.405,.014,white);
+
+// NOSE AND SMILE
+ball(body,0,2.13,.405,.045,skin);
+const smile=add(body,new THREE.TorusGeometry(.07,.012,6,16,Math.PI),mat(0x713d37),0,2.035,.39);
+smile.rotation.z=Math.PI;
+
+// CHEEKS
+ball(body,-.27,2.13,.33,.065,pink,1,.6,.5);
+ball(body,.27,2.13,.33,.065,pink,1,.6,.5);
+
+// HAIR STRANDS
+for(let i=0;i<3;i++){
+const strand=add(body,new THREE.SphereGeometry(.09,12,10),hairLight,-.16+i*.15,2.55,.27);
+strand.scale.set(1,.4,1);
+}
+
+// ACCESSORIES
+const bow=new THREE.Group();
+body.add(bow);
+ball(bow,-.12,2.78,.03,.12,pink,1.2,.7,.5);
+ball(bow,.12,2.78,.03,.12,pink,1.2,.7,.5);
+ball(bow,0,2.78,.1,.07,goldTrim);
+bow.visible=false;
+
+// CROWN
+const crown=new THREE.Group();
+body.add(crown);
+for(let i=0;i<7;i++){
+const a=i/7*Math.PI*2;
+ball(crown,Math.cos(a)*.38,2.64,Math.sin(a)*.3,.09,flowerMats[i%4]);
+}
+crown.visible=false;
+
+// BACKPACK
+const backpack=new THREE.Group();
+body.add(backpack);
+box(backpack,0,1.3,-.35,.4,.52,.22,bagMat);
+box(backpack,0,1.53,-.36,.3,.17,.24,goldTrim);
+backpack.visible=true;
+
+// ARMS
+const arms=[];
+for(const x of [-.39,.39]){
+const a=new THREE.Group();
+a.position.set(x,1.5,0);
+body.add(a);
+add(a,new THREE.CylinderGeometry(.13,.15,.4,14),dress,0,-.19,0);
+add(a,new THREE.CylinderGeometry(.085,.11,.35,14),skin,0,-.55,0);
+ball(a,0,-.75,.02,.105,skin);
+arms.push(a);
+}
+
+// LEGS
+const legs=[];
+for(const x of [-.2,.2]){
+const l=new THREE.Group();
+l.position.set(x,.85,0);
+body.add(l);
+add(l,new THREE.CylinderGeometry(.11,.13,.54,14),skin,0,-.27,0);
+add(l,new THREE.SphereGeometry(.16,14,12),shoes,0,-.55,.08).scale.set(1,.65,1.35);
+legs.push(l);
+}
+
+// CHARACTER POSITION
 player.position.set(0,0,1);
-// Roaming farm animals
-const animals=[];function animal(x,z,color,sheep=false){let g=new THREE.Group();g.position.set(x,0,z);scene.add(g);let fur=material(color);ball(g,0,.63,0,.5,fur,1.25,.8,.85);ball(g,.48,.86,.08,.3,fur);ball(g,.62,.91,.34,.04,eye);for(let i=0;i<(sheep?8:0);i++)ball(g,(i%4)*.2-.3,.9+Math.floor(i/4)*.15,-.1,.22,material(0xf3eee3));let legs=[];for(let xx of [-.3,.3])for(let zz of [-.22,.22])legs.push(add(g,new THREE.CylinderGeometry(.055,.075,.42,8),wood,xx,.25,zz));animals.push({g,legs,x,z,phase:Math.random()*6})}animal(-8,-5,0xc8ad83,true);animal(9,4,0x9a704e);animal(-5,20,0xe1a64c);animal(18,-5,0xd0b18b,true);animal(-18,3,0xf0eee5);
-// Coins and persistent V20-compatible progress
-const coins=[],gold=material(0xffc52b,.3);for(let i=0;i<28;i++){let g=new THREE.Group();add(g,new THREE.CylinderGeometry(.3,.3,.08,24),gold,0,0,0).rotation.x=Math.PI/2;g.position.set((Math.random()-.5)*24,.85,(Math.random()-.5)*48);scene.add(g);coins.push(g)}let total=0,missionCoins=0,saved=null;try{saved=JSON.parse(localStorage.getItem('dreamVillageV20')||'null')}catch(e){}const owned=new Set(saved?.owned||[]);if(saved){total=Math.max(0,+saved.total||0);missionCoins=Math.min(5,Math.max(0,+saved.missionCoins||0));if(Number.isFinite(saved.x))player.position.x=THREE.MathUtils.clamp(saved.x,-62,62);if(Number.isFinite(saved.z))player.position.z=THREE.MathUtils.clamp(saved.z,-68,68);if(Array.isArray(saved.collected))coins.forEach((c,i)=>c.visible=!saved.collected[i])}const update=()=>{$('coins').textContent=total;$('mission').textContent=missionCoins>=5?'🏆 Mission complete! You collected 5 coins!':`⭐ Collect 5 golden coins (${missionCoins}/5)`};function save(){try{localStorage.setItem('dreamVillageV20',JSON.stringify({total,x:player.position.x,z:player.position.z,collected:coins.map(c=>!c.visible),owned:[...owned],missionCoins}))}catch(e){}}update();
-const keys={};function bind(id,k){let el=$(id);el.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;el.setPointerCapture(e.pointerId)});for(let ev of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(ev,()=>keys[k]=false)}bind('up','f');bind('down','b');bind('left','l');bind('right','r');addEventListener('keydown',e=>{keys[{ArrowUp:'f',w:'f',ArrowDown:'b',s:'b',ArrowLeft:'l',a:'l',ArrowRight:'r',d:'r'}[e.key]]=true});addEventListener('keyup',e=>{keys[{ArrowUp:'f',w:'f',ArrowDown:'b',s:'b',ArrowLeft:'l',a:'l',ArrowRight:'r',d:'r'}[e.key]]=false});
-const panel=$('shopPanel');function shopUpdate(){$('shopCoins').textContent=total}document.querySelectorAll('.shopItem button').forEach(b=>{if(owned.has(b.dataset.item)){b.textContent='OWNED';b.disabled=true}b.onclick=()=>{let cost=+b.dataset.cost;if(total<cost){$('shopNote').textContent='Not enough coins yet.';return}total-=cost;owned.add(b.dataset.item);b.textContent='OWNED';b.disabled=true;update();shopUpdate();save();say('Purchase successful!')}});$('shop').onclick=()=>{shopUpdate();panel.style.display='grid'};$('closeShop').onclick=()=>panel.style.display='none';panel.addEventListener('click',e=>{if(e.target===panel)panel.style.display='none'});$('gift').onclick=()=>{total+=10;update();save();say('🎁 You received 10 bonus coins!')};
-const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.04),t=clock.elapsedTime,dx=(keys.r?1:0)-(keys.l?1:0),dz=(keys.b?1:0)-(keys.f?1:0),moving=!!(dx||dz);if(moving){let n=Math.hypot(dx,dz);dx/=n;dz/=n;player.position.x+=dx*5.5*dt;player.position.z+=dz*5.5*dt;player.rotation.y=Math.atan2(dx,dz)}player.position.x=THREE.MathUtils.clamp(player.position.x,-62,62);player.position.z=THREE.MathUtils.clamp(player.position.z,-68,68);if(moving&&Math.floor(t*3)!==Math.floor((t-dt)*3))save();let stride=moving?Math.sin(t*10.5):0;body.position.y=moving?Math.abs(stride)*.065:0;body.rotation.z=moving?Math.sin(t*5.25)*.025:0;legL.rotation.x=stride*.72;legR.rotation.x=-stride*.72;arms[0].rotation.x=-stride*.58;arms[1].rotation.x=stride*.58;animals.forEach(a=>{a.g.position.x=a.x+Math.sin(t*.55+a.phase)*1.8;a.g.position.z=a.z+Math.cos(t*.5+a.phase);a.g.rotation.y=Math.sin(t*.55+a.phase)*.6;a.legs.forEach((l,i)=>l.rotation.x=Math.sin(t*4+(i%2)*Math.PI)*.35)});coins.forEach(c=>{if(!c.visible)return;c.rotation.y+=dt*1.6;c.position.y=.85+Math.sin(t*2+c.position.x)*.1;if(c.position.distanceTo(player.position)<1.3){c.visible=false;total++;missionCoins=Math.min(5,missionCoins+1);update();say(missionCoins>=5?'🏆 Mission completed! Well done!':'✨ You collected a golden coin!');save()}});camera.position.x+=(player.position.x-camera.position.x)*dt*2.5;camera.position.z+=(player.position.z+19-camera.position.z)*dt*2.5;camera.position.y+=(13-camera.position.y)*dt*2;camera.lookAt(player.position.x,1.2,player.position.z);renderer.render(scene,camera)}camera.position.set(0,13,20);$('loading').style.display='none';animate();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-}catch(e){console.error(e);$('loading').textContent='Village could not load. Please check your internet connection and reload.'}
-</script></body></html>
+
+// ANIMALS
+const animals=[];
+const animalEye=mat(0x241a16);
+const nose=mat(0xd78d8b);
+
+function animal(x,z,color,type='cow'){
+const g=new THREE.Group();
+g.position.set(x,0,z);
+scene.add(g);
+
+const fur=mat(color);
+const legs=[];
+const head=new THREE.Group();
+g.add(head);
+
+if(type==='cow'){
+ball(g,0,.7,0,.53,white,1.35,.85,.85);
+ball(g,-.25,.85,-.2,.23,fur);
+ball(g,.28,.85,.15,.25,fur);
+}else if(type==='sheep'){
+ball(g,0,.7,0,.55,white,1.3,1,.95);
+for(let i=0;i<8;i++){
+ball(g,(i%4)*.22-.33,.92+Math.floor(i/4)*.13,-.18,.22,white);
+}
+}else{
+ball(g,0,.65,0,.47,fur,1.3,.8,.8);
+}
+
+// HEAD
+head.position.set(.48,.8,.1);
+ball(head,0,0,0,.29,fur);
+ball(head,.12,-.08,.23,.14,nose);
+ball(head,.13,.09,.22,.035,animalEye);
+ball(head,.1,.28,-.05,.13,fur);
+
+// LEGS
+for(const xx of [-.3,.3]){
+for(const zz of [-.23,.23]){
+const l=add(g,new THREE.CylinderGeometry(.055,.07,.4,8),wood,xx,.23,zz);
+legs.push(l);
+}
+}
+animals.push({g,head,legs,x,z,phase:Math.random()*6,pace:.5+Math.random()*.5});
+}
+animal(-8,-5,0xc7a984,'sheep');
+animal(9,4,0x9b714e,'cow');
+animal(-5,20,0xe2a74e,'cow');
+animal(18,-5,0xd0b18b,'sheep');
+animal(-18,3,0xf3eee5,'cow');
+animal(29,-13,0xb88a59,'cow');
+animal(-31,28,0xe1c89d,'sheep');
+
+// COINS
+const coins=[];
+for(let i=0;i<32;i++){
+const c=new THREE.Group();
+add(c,new THREE.CylinderGeometry(.3,.3,.08,24),gold,0,0,0).rotation.x=Math.PI/2;
+ball(c,0,0,.055,.12,mat(0xffe58a));
+c.position.set((Math.random()-.5)*30,.9,(Math.random()-.5)*75);
+scene.add(c);
+coins.push(c);
+}
+
+// SAVED PROGRESS - compatible with V22
+let total=0,missionCoins=0;
+let saved=null;
+try{saved=JSON.parse(localStorage.getItem('dreamVillageV20')||'null')}catch(e){}
+const owned=new Set(saved?.owned||[]);
+
+if(saved){
+total=Math.max(0,+saved.total||0);
+missionCoins=Math.min(5,Math.max(0,+saved.missionCoins||0));
+if(Number.isFinite(saved.x))player.position.x=THREE.MathUtils.clamp(saved.x,-85,85);
+if(Number.isFinite(saved.z))player.position.z=THREE.MathUtils.clamp(saved.z,-85,85);
+if(Array.isArray(saved.collected)){
+coins.forEach((c,i)=>c.visible=!saved.collected[i]);
+}
+}
+
+function update(){
+$('coins').textContent=total;
+$('mission').textContent=missionCoins>=5?
+'🏆 Mission completed! Well done!':
+`⭐ Collect 5 golden coins (${missionCoins}/5)`;
+}
+function save(){
+try{
+localStorage.setItem('dreamVillageV20',JSON.stringify({
+total,x:player.position.x,z:player.position.z,
+collected:coins.map(c=>!c.visible),
+owned:[...owned],missionCoins
+}));
+}catch(e){}
+}
+update();
+
+// SHOP
+function shopUpdate(){
+$('shopCoins').textContent=total;
+}
+document.querySelectorAll('.shopItem button').forEach(b=>{
+if(owned.has(b.dataset.item)){
+b.textContent='OWNED';
+b.disabled=true;
+}
+b.onclick=()=>{
+const cost=+b.dataset.cost;
+if(total<cost){
+$('shopNote').textContent='Not enough coins yet!';
+return;
+}
+total-=cost;
+owned.add(b.dataset.item);
+b.textContent='OWNED';
+b.disabled=true;
+
+if(b.dataset.item==='bow')bow.visible=true;
+if(b.dataset.item==='bag')backpack.visible=true;
+if(b.dataset.item==='crown')crown.visible=true;
+
+update();
+shopUpdate();
+save();
+say('✨ Your new accessory looks lovely!');
+};
+});
+
+if(owned.has('bow'))bow.visible=true;
+if(owned.has('crown'))crown.visible=true;
+if(owned.has('bag'))backpack.visible=true;
+
+const panel=$('shopPanel');
+$('shop').onclick=()=>{shopUpdate();panel.style.display='grid'};
+$('closeShop').onclick=()=>panel.style.display='none';
+panel.addEventListener('click',e=>{
+if(e.target===panel)panel.style.display='none';
+});
+$('gift').onclick=()=>{
+total+=10;
+update();
+save();
+say('🎁 You received 10 bonus coins!');
+};
+
+// MOBILE AND KEYBOARD CONTROLS
+const keys={};
+function bind(id,k){
+const el=$(id);
+el.addEventListener('pointerdown',e=>{
+e.preventDefault();
+keys[k]=true;
+el.setPointerCapture(e.pointerId);
+});
+for(const ev of ['pointerup','pointercancel','lostpointercapture']){
+el.addEventListener(ev,()=>keys[k]=false);
+}
+}
+bind('up','f');
+bind('down','b');
+bind('left','l');
+bind('right','r');
+
+const keyMap={
+ArrowUp:'f',w:'f',ArrowDown:'b',s:'b',
+ArrowLeft:'l',a:'l',ArrowRight:'r',d:'r'
+};
+addEventListener('keydown',e=>{
+if(keyMap[e.key])keys[keyMap[e.key]]=true;
+});
+addEventListener('keyup',e=>{
+if(keyMap[e.key])keys[keyMap[e.key]]=false;
+});
+addEventListener('blur',()=>Object.keys(keys).forEach(k=>keys[k]=false));
+
+// CAMERA
+camera.position.set(0,12,20);
+
+// GAME LOOP
+const clock=new THREE.Clock();
+let saveTimer=0;
+
+function animate(){
+requestAnimationFrame(animate);
+
+const dt=Math.min(clock.getDelta(),.04);
+const t=clock.elapsedTime;
+
+let dx=(keys.r?1:0)-(keys.l?1:0);
+let dz=(keys.b?1:0)-(keys.f?1:0);
+const moving=!!(dx||dz);
+
+if(moving){
+const n=Math.hypot(dx,dz);
+dx/=n;
+dz/=n;
+
+player.position.x+=dx*5.8*dt;
+player.position.z+=dz*5.8*dt;
+player.rotation.y=Math.atan2(dx,dz);
+}
+
+// WORLD BOUNDARIES
+player.position.x=THREE.MathUtils.clamp(player.position.x,-85,85);
+player.position.z=THREE.MathUtils.clamp(player.position.z,-85,85);
+
+// WALKING ANIMATION
+const stride=moving?Math.sin(t*11):0;
+body.position.y=moving?Math.abs(stride)*.07:0;
+body.rotation.z=moving?Math.sin(t*5.5)*.025:0;
+
+legs[0].rotation.x=stride*.72;
+legs[1].rotation.x=-stride*.72;
+arms[0].rotation.x=-stride*.62;
+arms[1].rotation.x=stride*.62;
+
+// ACCESSORY MOVEMENT
+backpack.rotation.x=moving?Math.sin(t*11)*.035:0;
+bow.rotation.z=Math.sin(t*3)*.06;
+
+// ANIMAL ROAMING
+animals.forEach(a=>{
+const px=a.x+Math.sin(t*a.pace+a.phase)*2.3;
+const pz=a.z+Math.cos(t*a.pace*.8+a.phase)*1.7;
+
+a.g.position.x=px;
+a.g.position.z=pz;
+a.g.rotation.y=Math.cos(t*a.pace+a.phase)*.5;
+a.head.rotation.y=Math.sin(t*.7+a.phase)*.3;
+
+a.legs.forEach((l,i)=>{
+l.rotation.x=Math.sin(t*4*a.pace+(i%2)*Math.PI)*.3;
+});
+});
+
+// COIN ANIMATION AND COLLECTION
+coins.forEach(c=>{
+if(!c.visible)return;
+
+c.rotation.y+=dt*1.8;
+c.position.y=.9+Math.sin(t*2+c.position.x)*.12;
+
+if(c.position.distanceTo(player.position)<1.35){
+c.visible=false;
+total++;
+missionCoins=Math.min(5,missionCoins+1);
+update();
+say(missionCoins>=5?
+'🏆 Mission complete! You are amazing!':
+'✨ Golden coin collected!');
+save();
+}
+});
+
+// CAMERA FOLLOW
+const targetX=player.position.x;
+const targetZ=player.position.z;
+
+camera.position.x+=(targetX-camera.position.x)*dt*2.8;
+camera.position.z+=(targetZ+17-camera.position.z)*dt*2.8;
+camera.position.y+=(13-camera.position.y)*dt*2.2;
+camera.lookAt(targetX,1.15,targetZ);
+
+// SAVE PROGRESS
+saveTimer+=dt;
+if(saveTimer>3){
+saveTimer=0;
+save();
+}
+
+renderer.render(scene,camera);
+}
+
+// START
+$('loading').style.display='none';
+animate();
+
+// RESIZE
+addEventListener('resize',()=>{
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(innerWidth,innerHeight);
+});
+
+}catch(e){
+console.error(e);
+$('loading').textContent='Village could not load. Check your internet connection and reload.';
+}
+</script>
+</body>
+</html>
