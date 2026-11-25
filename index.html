@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Dream Village Adventure V19</title>
+<title>Dream Village Adventure V20</title>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#9bd8f4;font-family:Arial,sans-serif;touch-action:none}
@@ -18,6 +18,7 @@ canvas{display:block;width:100%;height:100%}
 #actions{position:fixed;bottom:34px;right:18px;display:flex;flex-direction:column;gap:10px;z-index:8}
 .action{border:0;border-radius:22px;padding:15px 18px;background:#ffcf55;color:#65402f;font-weight:bold;font-size:15px;box-shadow:0 3px 9px #0003}
 #help{position:fixed;bottom:7px;left:50%;transform:translateX(-50%);font-size:11px;color:white;text-shadow:0 1px 4px #333;z-index:4;white-space:nowrap}
+#mission{position:fixed;top:112px;left:50%;transform:translateX(-50%);z-index:5;background:#fffdf0eF;color:#31523b;padding:8px 13px;border-radius:15px;font-size:12px;font-weight:bold;box-shadow:0 2px 9px #31523b25;white-space:nowrap}
 #shopPanel{position:fixed;inset:0;z-index:30;display:none;place-items:center;background:#17351f88;padding:18px}
 #shopCard{width:min(360px,94vw);background:#fff8e9;border:3px solid #e5bd70;border-radius:24px;padding:18px;color:#493525;box-shadow:0 12px 35px #0005}
 #shopCard h2{margin:0 0 6px;font-size:22px}
@@ -38,10 +39,11 @@ canvas{display:block;width:100%;height:100%}
 <div id="game"></div>
 <div id="loading">Preparing your village...<small>Please wait while the 3D village loads.</small></div>
 <div id="hud">
- <div class="pill">🌸 DREAM VILLAGE V19</div>
+ <div class="pill">🌸 DREAM VILLAGE V20</div>
  <div class="pill">🪙 <span id="coins">0</span></div>
 </div>
 <div id="message">Welcome! Explore your beautiful village.</div>
+<div id="mission">⭐ First mission: collect 5 golden coins (0/5)</div>
 <div id="controls">
  <button class="ctrl" id="up" aria-label="Move forward">▲</button>
  <button class="ctrl" id="left" aria-label="Move left">◀</button>
@@ -258,6 +260,34 @@ for(let i=0;i<28;i++){
 }
 let total=0;
 const coinText=document.getElementById('coins');
+const missionText=document.getElementById('mission');
+const missionGoal=5;
+let missionCoins=0;
+let savedState=null;
+try { savedState=JSON.parse(localStorage.getItem('dreamVillageV20')||'null'); } catch(e) { savedState=null; }
+function saveGame(){
+ try {
+  localStorage.setItem('dreamVillageV20',JSON.stringify({
+   total, x:player.position.x, z:player.position.z,
+   collected:coins.map(c=>!c.visible), owned:Array.from(owned),
+   missionCoins
+  }));
+ } catch(e) {}
+}
+function updateMission(){
+ missionText.textContent=missionCoins>=missionGoal
+  ? '🏆 Mission complete! You collected 5 coins!'
+  : `⭐ First mission: collect 5 golden coins (${missionCoins}/${missionGoal})`;
+}
+if(savedState){
+ total=Math.max(0,Number(savedState.total)||0);
+ missionCoins=Math.max(0,Math.min(missionGoal,Number(savedState.missionCoins)||0));
+ if(Number.isFinite(savedState.x))player.position.x=THREE.MathUtils.clamp(savedState.x,-27,27);
+ if(Number.isFinite(savedState.z))player.position.z=THREE.MathUtils.clamp(savedState.z,-32,32);
+ if(Array.isArray(savedState.collected))coins.forEach((c,i)=>{if(savedState.collected[i])c.visible=false;});
+}
+coinText.textContent=total;
+updateMission();
 const keys={forward:false,back:false,left:false,right:false};
 function bindButton(id,key){
  const el=document.getElementById(id);
@@ -281,7 +311,10 @@ addEventListener('keyup',e=>{
 const shopPanel=document.getElementById('shopPanel');
 const shopCoins=document.getElementById('shopCoins');
 const shopNote=document.getElementById('shopNote');
-const owned=new Set();
+const owned=new Set(Array.isArray(savedState?.owned)?savedState.owned:[]);
+document.querySelectorAll('.shopItem button').forEach(button=>{
+ if(owned.has(button.dataset.item)){button.textContent='OWNED';button.disabled=true;}
+});
 function updateShop(){shopCoins.textContent=total;}
 document.getElementById('shop').onclick=()=>{updateShop();shopNote.textContent='Choose an item to buy.';shopPanel.style.display='grid';};
 document.getElementById('closeShop').onclick=()=>shopPanel.style.display='none';
@@ -292,12 +325,12 @@ document.querySelectorAll('.shopItem button').forEach(button=>{
   if(owned.has(item)){shopNote.textContent='You already own this item!';return;}
   if(total<cost){shopNote.textContent='Not enough coins yet. Explore and collect more!';return;}
   total-=cost;coinText.textContent=total;updateShop();owned.add(item);
-  button.textContent='OWNED';button.disabled=true;
+  button.textContent='OWNED';button.disabled=true;saveGame();
   say('🎁 Purchase successful! Enjoy your new item.');
   shopNote.textContent='Purchase successful!';
  };
 });
-document.getElementById('gift').onclick=()=>{total+=10;coinText.textContent=total;updateShop();say('🎁 You received 10 bonus coins!');};
+document.getElementById('gift').onclick=()=>{total+=10;coinText.textContent=total;updateShop();say('🎁 You received 10 bonus coins!');saveGame();};
 
 const clock=new THREE.Clock();
 function animate(){
@@ -313,6 +346,7 @@ function animate(){
  }
  player.position.x=THREE.MathUtils.clamp(player.position.x,-27,27);
  player.position.z=THREE.MathUtils.clamp(player.position.z,-32,32);
+ if(moving)saveGame();
  const stride=moving?Math.sin(t*12):0;
  body.position.y=moving?Math.abs(Math.sin(t*12))*.095:0;
  body.rotation.z=moving?Math.sin(t*6)*.035:0;
@@ -332,7 +366,10 @@ function animate(){
  for(const c of coins){
   c.rotation.y+=dt*1.8;c.position.y=.9+Math.sin(t*2+c.position.x)*.12;
   if(c.visible&&c.position.distanceTo(player.position)<1.35){
-   c.visible=false;total++;coinText.textContent=total;say('✨ Wonderful! You collected a coin!');
+   c.visible=false;total++;missionCoins=Math.min(missionGoal,missionCoins+1);
+   coinText.textContent=total;updateMission();
+   say(missionCoins>=missionGoal?'🏆 First mission completed! Well done!':'✨ Wonderful! You collected a coin!');
+   saveGame();
   }
  }
  camera.position.x+=(player.position.x-camera.position.x)*dt*2.5;
